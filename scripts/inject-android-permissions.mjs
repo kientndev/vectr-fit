@@ -64,3 +64,4 @@ public class MainActivity extends BridgeActivity {
 } else {
   console.log('• No MainActivity.java found at:', mainActivityPath);
 }
+
