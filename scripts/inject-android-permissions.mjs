@@ -40,15 +40,26 @@ const mainActivityPath = path.resolve(
 if (fs.existsSync(mainActivityPath)) {
   const customMainActivity = `package com.vectrfit.app;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Explicitly request OS-level Android camera permission on app launch
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, 101);
+        }
+
+        // Bridge WebView WebChromeClient to grant HTML5 getUserMedia video captures automatically
         if (this.bridge != null && this.bridge.getWebView() != null) {
             this.bridge.getWebView().setWebChromeClient(new WebChromeClient() {
                 @Override
@@ -66,7 +77,7 @@ public class MainActivity extends BridgeActivity {
 }
 `;
   fs.writeFileSync(mainActivityPath, customMainActivity, 'utf8');
-  console.log('✓ Successfully configured MainActivity.java with WebChromeClient onPermissionRequest');
+  console.log('✓ Successfully configured MainActivity.java with OS runtime camera request & WebChromeClient onPermissionRequest');
 } else {
   console.log('• No MainActivity.java found at:', mainActivityPath);
 }

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { feedback } from '../lib/feedback';
 import {
-  Camera,
+  Camera as CameraIcon,
   RotateCcw,
   Zap,
   X,
@@ -14,7 +14,18 @@ import {
   Square,
   RefreshCw,
   Sliders,
+  Image as ImageIcon,
 } from 'lucide-react';
+
+// Dynamically import Capacitor Camera for native Android photo/video capture
+let CapacitorCamera: any = null;
+if (typeof window !== 'undefined') {
+  import('@capacitor/camera')
+    .then(mod => {
+      CapacitorCamera = mod.Camera;
+    })
+    .catch(() => {});
+}
 
 interface FormCheckCameraProps {
   isOpen: boolean;
@@ -318,6 +329,46 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     return () => clearTimeout(timer);
   }, [isMetronomeActive, isOpen]);
 
+  // Snap native photo via Capacitor Camera if WebView video stream is unavailable
+  const handleSnapNativePhoto = async () => {
+    feedback.hapticLight();
+    if (CapacitorCamera) {
+      try {
+        const photo = await CapacitorCamera.getPhoto({
+          quality: 85,
+          allowEditing: false,
+          resultType: 'base64',
+          source: 'CAMERA',
+        });
+        if (photo?.base64String) {
+          const fullBase64 = `data:image/jpeg;base64,${photo.base64String}`;
+          setIsAnalyzing(true);
+          setAnalysisResult(null);
+
+          if (onAnalyze) {
+            const res = await onAnalyze({
+              exerciseName,
+              imageBase64: fullBase64,
+              telemetry: {
+                spineAlignmentDeg: spineAlignment,
+                elbowAngleDeg: elbowAngle,
+                romDepthPct: romDepth,
+                repCount: Math.max(1, repCount),
+              },
+            });
+            setAnalysisResult(res);
+            feedback.playExerciseComplete();
+            feedback.hapticSuccess();
+          }
+          setIsAnalyzing(false);
+          return;
+        }
+      } catch (e) {
+        console.warn('Native camera snap canceled or error:', e);
+      }
+    }
+  };
+
   // Capture Frame and Trigger AI Form Check
   const handleAnalyzeSnapshot = async () => {
     feedback.hapticLight();
@@ -453,6 +504,14 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
                 className="mt-4 px-4 py-2 rounded-xl bg-[#A3E635] text-black font-bold text-xs active:scale-95 transition"
               >
                 Retry Camera Access
+              </button>
+              <button
+                type="button"
+                onClick={handleSnapNativePhoto}
+                className="mt-2.5 flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs active:scale-95 transition border border-white/10"
+              >
+                <CameraIcon className="h-4 w-4 text-[#A3E635]" />
+                <span>Snap Photo with Native Camera</span>
               </button>
             </div>
           )}
