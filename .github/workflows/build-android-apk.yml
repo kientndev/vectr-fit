@@ -43,47 +43,7 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
-
-          # Inject Camera Permissions into AndroidManifest.xml
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST" ]; then
-            if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
-              sed -i '/<manifest/a \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />' "$MANIFEST"
-            fi
-          fi
-
-          # Configure MainActivity to automatically grant WebView Camera Permissions
-          MAIN_ACTIVITY="android/app/src/main/java/com/vectrfit/app/MainActivity.java"
-          if [ -f "$MAIN_ACTIVITY" ]; then
-            cat << 'EOF' > "$MAIN_ACTIVITY"
-package com.vectrfit.app;
-
-import android.os.Bundle;
-import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
-import com.getcapacitor.BridgeActivity;
-
-public class MainActivity extends BridgeActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (this.bridge != null && this.bridge.getWebView() != null) {
-            this.bridge.getWebView().setWebChromeClient(new WebChromeClient() {
-                @Override
-                public void onPermissionRequest(final PermissionRequest request) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            request.grant(request.getResources());
-                        }
-                    });
-                }
-            });
-        }
-    }
-}
-EOF
-          fi
+          node scripts/inject-android-permissions.mjs
 
       - name: Build Debug APK with Gradle
         working-directory: ./android
