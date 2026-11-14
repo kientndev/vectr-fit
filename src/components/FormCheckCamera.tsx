@@ -70,48 +70,86 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     microCorrection: string;
   } | null>(null);
 
-  // Start Camera Stream
+  // Start Camera Stream with progressive fallback constraints
   const startCamera = async (facing: 'user' | 'environment') => {
     try {
       setCameraError(null);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
 
       if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
         setCameraError(
-          'Camera access requires HTTPS or localhost, or your browser does not support getUserMedia.'
+          'Camera access requires HTTPS or localhost, or your browser/WebView does not support getUserMedia.'
         );
         return;
       }
 
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: facing },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
+      let stream: MediaStream | null = null;
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Attempt 1: Try with ideal resolution and facingMode
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        });
+      } catch (e1) {
+        console.warn('Attempt 1 failed, trying simple facingMode:', e1);
+        // Attempt 2: Try simple facingMode string (standard mobile Android)
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: facing },
+            audio: false,
+          });
+        } catch (e2) {
+          console.warn('Attempt 2 failed, trying bare video constraint:', e2);
+          // Attempt 3: Bare minimum constraint (any video source available)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
+      }
+
+      if (!stream) {
+        throw new Error('No video stream returned by hardware');
+      }
+
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(e => console.warn('Video play warning:', e));
-        };
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
+        videoRef.current.muted = true;
+        
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn('Direct play error, waiting on metadata:', playErr);
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(e => console.warn('Delayed play error:', e));
+          };
+        }
       }
       setHasPermission(true);
     } catch (err: any) {
       console.error('Camera access error:', err);
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setCameraError(
-          'Camera permission was blocked. Please tap the lock / settings icon in your browser URL bar and set Camera to "Allow".'
+          'Android Camera permission blocked. Go to Phone Settings > Apps > VECTR FIT > Permissions > Camera > Allow.'
         );
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setCameraError('No camera device detected on this hardware.');
+        setCameraError('No camera detected on this device.');
+      } else if (err.name === 'NotReadableError' || err.message?.includes('Could not start video source')) {
+        setCameraError(
+          'Camera hardware is in use by another app or needs permission. Try tapping "Retry Camera Access" or restart the app.'
+        );
       } else {
         setCameraError(err?.message || 'Unable to start camera video stream.');
       }

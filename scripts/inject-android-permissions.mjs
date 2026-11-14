@@ -7,12 +7,18 @@ const manifestPath = path.resolve(process.cwd(), 'android/app/src/main/AndroidMa
 if (fs.existsSync(manifestPath)) {
   let content = fs.readFileSync(manifestPath, 'utf8');
 
-  const cameraPermission = '    <uses-permission android:name="android.permission.CAMERA" />';
-  const cameraFeature = '    <uses-feature android:name="android.hardware.camera" android:required="false" />';
+  const permissions = [
+    '    <uses-permission android:name="android.permission.CAMERA" />',
+    '    <uses-permission android:name="android.permission.RECORD_AUDIO" />',
+    '    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
+    '    <uses-feature android:name="android.hardware.camera" android:required="false" />',
+    '    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />',
+    '    <uses-feature android:name="android.hardware.camera.front" android:required="false" />',
+  ].join('\n');
 
   if (!content.includes('android.permission.CAMERA')) {
     if (content.includes('</manifest>')) {
-      content = content.replace('</manifest>', `${cameraPermission}\n${cameraFeature}\n</manifest>`);
+      content = content.replace('</manifest>', `${permissions}\n</manifest>`);
       fs.writeFileSync(manifestPath, content, 'utf8');
       console.log('✓ Successfully injected Camera permissions into AndroidManifest.xml');
     } else {
