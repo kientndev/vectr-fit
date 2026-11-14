@@ -78,31 +78,43 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
         streamRef.current.getTracks().forEach(track => track.stop());
       }
 
-      if (!navigator?.mediaDevices?.getUserMedia) {
-        setCameraError('Camera API is not supported on this device/browser.');
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+        setCameraError(
+          'Camera access requires HTTPS or localhost, or your browser does not support getUserMedia.'
+        );
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: facing,
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
+          facingMode: { ideal: facing },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
         audio: false,
-      });
+      };
 
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       streamRef.current = stream;
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(e => console.warn('Video play warning:', e));
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(e => console.warn('Video play warning:', e));
+        };
       }
       setHasPermission(true);
     } catch (err: any) {
       console.error('Camera access error:', err);
-      setCameraError(
-        err?.message || 'Camera permission denied or camera not found. Please allow camera access in browser/device settings.'
-      );
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setCameraError(
+          'Camera permission was blocked. Please tap the lock / settings icon in your browser URL bar and set Camera to "Allow".'
+        );
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setCameraError('No camera device detected on this hardware.');
+      } else {
+        setCameraError(err?.message || 'Unable to start camera video stream.');
+      }
       setHasPermission(false);
     }
   };
