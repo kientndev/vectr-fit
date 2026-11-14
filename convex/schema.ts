@@ -13,6 +13,17 @@ export default defineSchema({
     lastCompletedDate: v.optional(v.string()),
     isPro: v.boolean(),
     muscleReadiness: v.any(), // 6-zone readiness percentages
+    onboardingCompleted: v.optional(v.boolean()),
+    biometrics: v.optional(
+      v.object({
+        weightKg: v.number(),
+        heightCm: v.number(),
+        maxPullups: v.string(),
+        maxPushups: v.string(),
+        targetSkill: v.string(),
+        equipment: v.array(v.string()),
+      })
+    ),
   }).index('by_userId', ['userId']),
 
   // Daily Blueprints (DO / NEED / AVOID)

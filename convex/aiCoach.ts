@@ -213,3 +213,130 @@ Generate a complete daily protocol in strict JSON matching this structure:
   },
 });
 
+/**
+ * Convex Cloud Action: analyzeExerciseForm
+ * Uses Gemini Flash Vision (or biomechanical rule engine fallback)
+ * to evaluate the athlete's exercise movement, alignment, and tempo.
+ */
+export const analyzeExerciseForm = action({
+  args: {
+    exerciseName: v.string(),
+    imageBase64: v.optional(v.string()), // frame image data URL or base64
+    telemetry: v.object({
+      spineAlignmentDeg: v.number(),
+      elbowAngleDeg: v.number(),
+      romDepthPct: v.number(),
+      repCount: v.number(),
+    }),
+    persona: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { exerciseName, imageBase64, telemetry, persona = 'TACTICAL_SCIENTIST' } = args;
+    const isScientist = persona === 'TACTICAL_SCIENTIST';
+
+    const geminiKey = process.env.GEMINI_API_KEY;
+
+    // Deterministic Biomechanical Analysis
+    let calculatedScore = 88;
+    let solidPoints = 'Strong scapular depression and controlled tempo through the eccentric phase.';
+    let microCorrection = 'Maintain tighter core engagement to avoid lumbar hyperextension at peak contraction.';
+
+    // Evaluate telemetry metrics
+    if (telemetry.romDepthPct >= 90) {
+      calculatedScore += 6;
+      solidPoints = 'Full range of motion achieved with complete lock-in at joint terminal points.';
+    } else if (telemetry.romDepthPct < 70) {
+      calculatedScore -= 12;
+      microCorrection = `Depth was limited to ~${telemetry.romDepthPct}%. Deepen the eccentric travel to stimulate full motor unit recruitment.`;
+    }
+
+    if (Math.abs(telemetry.spineAlignmentDeg - 180) < 10) {
+      calculatedScore += 4;
+    } else if (Math.abs(telemetry.spineAlignmentDeg - 180) > 20) {
+      calculatedScore -= 8;
+      microCorrection = 'Spine deviated from neutral alignment. Tuck chin and squeeze glutes to restore rigid hollow-body tension.';
+    }
+
+    calculatedScore = Math.max(68, Math.min(98, calculatedScore));
+
+    // If Gemini API Key exists and an image frame is provided, send to Gemini Flash Vision
+    if (geminiKey && imageBase64) {
+      try {
+        const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+        const prompt = `You are VECTR FIT Biomechanical Form Analysis AI.
+Exercise: "${exerciseName}".
+Telemetry Captured:
+- Spine Alignment: ${telemetry.spineAlignmentDeg.toFixed(1)}°
+- Joint/Elbow Angle: ${telemetry.elbowAngleDeg.toFixed(1)}°
+- ROM Depth: ${telemetry.romDepthPct.toFixed(0)}%
+- Reps Completed: ${telemetry.repCount}
+Coach Persona: ${isScientist ? 'Tactical Biomechanist' : 'Drill Sergeant'}.
+
+Analyze the athlete's posture, kinetic chain, joint angles, and mechanical tension from this captured video frame.
+Return STRICT JSON format:
+{
+  "formScore": 92,
+  "whatLookedSolid": "1 concise sentence praising their biomechanics",
+  "microCorrection": "1 actionable sentence providing a technical fix"
+}`;
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: prompt },
+                    {
+                      inlineData: {
+                        mimeType: 'image/jpeg',
+                        data: cleanBase64,
+                      },
+                    },
+                  ],
+                },
+              ],
+              generationConfig: { responseMimeType: 'application/json' },
+            }),
+          }
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawText) {
+            const parsed = JSON.parse(rawText);
+            return {
+              success: true,
+              formScore: parsed.formScore ?? calculatedScore,
+              whatLookedSolid: parsed.whatLookedSolid ?? solidPoints,
+              microCorrection: parsed.microCorrection ?? microCorrection,
+              engine: 'gemini-vision',
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('Gemini vision API error, falling back to local biomechanics:', err);
+      }
+    }
+
+    // Persona-tailored deterministic response
+    if (!isScientist) {
+      solidPoints = 'Aggressive drive through the sticking point. Good intent on the concentric.';
+      microCorrection = 'Lock your core down! Stop leaking energy through sloppy lumbar arching!';
+    }
+
+    return {
+      success: true,
+      formScore: calculatedScore,
+      whatLookedSolid: solidPoints,
+      microCorrection: microCorrection,
+      engine: 'biomechanical-telemetry',
+    };
+  },
+});
+
+

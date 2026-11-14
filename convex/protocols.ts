@@ -278,3 +278,54 @@ export const swapExercise = mutation({
   },
 });
 
+/**
+ * completeOnboarding: Saves questionnaire answers, computes recommended Tier,
+ * marks onboarding as complete, and updates athlete profile.
+ */
+export const completeOnboarding = mutation({
+  args: {
+    userId: v.string(),
+    biometrics: v.object({
+      weightKg: v.number(),
+      heightCm: v.number(),
+      maxPullups: v.string(),
+      maxPushups: v.string(),
+      targetSkill: v.string(),
+      equipment: v.array(v.string()),
+    }),
+    modality: v.union(v.literal('bodyweight'), v.literal('gym')),
+    tier: v.number(),
+    objective: v.string(),
+    coachPersona: v.string(),
+    soreJoints: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('athleteProfiles')
+      .withIndex('by_userId', q => q.eq('userId', args.userId))
+      .first();
+
+    const profileData = {
+      userId: args.userId,
+      modality: args.modality,
+      tier: args.tier,
+      objective: args.objective,
+      coachPersona: args.coachPersona,
+      streakCount: existing?.streakCount ?? 1,
+      lastCompletedDate: existing?.lastCompletedDate,
+      isPro: existing?.isPro ?? false,
+      muscleReadiness: existing?.muscleReadiness ?? DEFAULT_READINESS,
+      onboardingCompleted: true,
+      biometrics: args.biometrics,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, profileData);
+      return existing._id;
+    } else {
+      return await ctx.db.insert('athleteProfiles', profileData);
+    }
+  },
+});
+
+

@@ -28,6 +28,7 @@ interface CalibrationPanelProps {
   onChange: (updates: Partial<CalibrationState>) => void;
   onGenerate: () => void;
   isGenerating?: boolean;
+  onOpenOnboarding?: () => void;
 }
 
 export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
@@ -35,6 +36,7 @@ export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
   onChange,
   onGenerate,
   isGenerating = false,
+  onOpenOnboarding,
 }) => {
   const {
     modality,
@@ -90,9 +92,16 @@ export const CalibrationPanel: React.FC<CalibrationPanelProps> = ({
               Athlete Calibration
             </h2>
           </div>
-          <span className="text-[11px] font-medium text-zinc-500">
-            Auto-Sync
-          </span>
+          {onOpenOnboarding && (
+            <button
+              type="button"
+              onClick={onOpenOnboarding}
+              className="text-[11px] font-semibold text-[#A3E635] hover:underline flex items-center gap-1 active:scale-95 transition"
+            >
+              <Sparkles className="h-3 w-3" />
+              <span>Re-run Assessment</span>
+            </button>
+          )}
         </div>
 
         {/* 1. Modality: 2-way Segmented Control */}

@@ -19,6 +19,7 @@ import {
   Play,
   Square,
   Trophy,
+  Camera,
 } from 'lucide-react';
 
 interface DailyBlueprintProps {
@@ -45,6 +46,7 @@ interface DailyBlueprintProps {
   isLiveActive?: boolean;
   liveSeconds?: number;
   onToggleLiveSession?: () => void;
+  onOpenFormCamera?: (exerciseName: string) => void;
 }
 
 export const DailyBlueprint: React.FC<DailyBlueprintProps> = ({
@@ -71,6 +73,7 @@ export const DailyBlueprint: React.FC<DailyBlueprintProps> = ({
   isLiveActive = false,
   liveSeconds = 0,
   onToggleLiveSession,
+  onOpenFormCamera,
 }) => {
   const [copied, setCopied] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
@@ -185,27 +188,40 @@ ${protocol.avoidRules.map(a => `- ${a.title}: ${a.description}`).join('\n')}
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleLiveSession}
-          className={`w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all touch-manipulation active:scale-95 shadow-sm ${
-            isLiveActive
-              ? 'bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300'
-              : 'bg-[#A3E635] hover:bg-[#bbf055] text-zinc-950 shadow-[0_0_15px_rgba(163,230,53,0.25)]'
-          }`}
-        >
-          {isLiveActive ? (
-            <>
-              <Square className="h-3.5 w-3.5 fill-current" />
-              <span>END WORKOUT SESSION</span>
-            </>
-          ) : (
-            <>
-              <Play className="h-3.5 w-3.5 fill-current" />
-              <span>START LIVE SESSION</span>
-            </>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {onOpenFormCamera && (
+            <button
+              type="button"
+              onClick={() => onOpenFormCamera(allExercises[0]?.name || 'Movement')}
+              className="flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-semibold bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white active:scale-95 transition"
+            >
+              <Camera className="h-4 w-4 text-[#A3E635]" />
+              <span className="hidden xs:inline">Form Cam</span>
+            </button>
           )}
-        </button>
+
+          <button
+            type="button"
+            onClick={onToggleLiveSession}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold transition-all touch-manipulation active:scale-95 shadow-sm ${
+              isLiveActive
+                ? 'bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300'
+                : 'bg-[#A3E635] hover:bg-[#bbf055] text-zinc-950 shadow-[0_0_15px_rgba(163,230,53,0.25)]'
+            }`}
+          >
+            {isLiveActive ? (
+              <>
+                <Square className="h-3.5 w-3.5 fill-current" />
+                <span>END WORKOUT SESSION</span>
+              </>
+            ) : (
+              <>
+                <Play className="h-3.5 w-3.5 fill-current" />
+                <span>START LIVE SESSION</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* 2. TOP SUMMARY STRIP: SVG Ring + Metrics + Coach Briefing */}
@@ -411,6 +427,17 @@ ${protocol.avoidRules.map(a => `- ${a.title}: ${a.description}`).join('\n')}
                             <Clock className="h-3 w-3 text-zinc-400" />
                             <span>{exercise.restSeconds}s Rest</span>
                           </button>
+                          {onOpenFormCamera && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenFormCamera(exercise.name)}
+                              title="Live AI Form-Check Camera"
+                              className="flex items-center gap-1 rounded-md bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 px-2 py-0.5 text-xs font-medium text-[#A3E635] transition active:scale-95"
+                            >
+                              <Camera className="h-3 w-3 text-[#A3E635]" />
+                              <span>Form Cam</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => onSwapExercise(bIdx, eIdx)}

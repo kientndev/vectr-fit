@@ -32,6 +32,14 @@ class FeedbackEngine {
     }
   }
 
+  hapticLight() {
+    this.triggerHaptic(18);
+  }
+
+  hapticSuccess() {
+    this.triggerHaptic([30, 40, 50]);
+  }
+
   // Set Complete: Crisp futuristic rising chirp + 35ms haptic
   playSetComplete() {
     this.triggerHaptic(35);
