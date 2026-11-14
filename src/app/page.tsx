@@ -23,8 +23,8 @@ import { RestTimer, RestTimerState } from '../components/RestTimer';
 import { ProUpgradeModal } from '../components/ProUpgradeModal';
 import { ProHistoryStrip } from '../components/ProHistoryStrip';
 import { BottomNav, MobileTab } from '../components/BottomNav';
-import { sounds } from '../lib/soundUtils';
-import { Check } from 'lucide-react';
+import { feedback } from '../lib/feedback';
+import { Check, Plus, Droplet, Sparkles, Zap, Shield, Heart } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -61,10 +61,21 @@ export default function Home() {
   const [completedFuel, setCompletedFuel] = useState<Record<string, boolean>>({});
   const [completedAvoid, setCompletedAvoid] = useState<Record<string, boolean>>({});
 
+  // Dynamic Fuel Quantities (e.g. Water in Liters)
+  const [waterAmount, setWaterAmount] = useState<number>(1.5);
+
   // Discipline & History State
   const [streakCount, setStreakCount] = useState<number>(DEFAULT_STORAGE_STATE.streakCount);
   const [completedWorkouts, setCompletedWorkouts] = useState<WorkoutHistoryEntry[]>(DEFAULT_STORAGE_STATE.completedWorkouts);
   const [isPro, setIsPro] = useState<boolean>(DEFAULT_STORAGE_STATE.isPro);
+
+  // Gamification & XP State
+  const [userXp, setUserXp] = useState<number>(420);
+  const [floatingXp, setFloatingXp] = useState<{ id: number; text: string } | null>(null);
+
+  // Live Workout Session Mode State
+  const [isLiveActive, setIsLiveActive] = useState<boolean>(false);
+  const [liveSeconds, setLiveSeconds] = useState<number>(0);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -88,6 +99,15 @@ export default function Home() {
 
   // Track hydration status to avoid SSR mismatches
   const isHydrated = useRef(false);
+
+  // Helper: Trigger floating XP badge and award XP
+  const awardXp = (amount: number, reason: string) => {
+    setUserXp(prev => prev + amount);
+    setFloatingXp({ id: Date.now(), text: `+${amount} XP ${reason}` });
+    setTimeout(() => {
+      setFloatingXp(null);
+    }, 1800);
+  };
 
   // 3. Convex Live Database Hooks (with safe null-guarding if offline or Convex URL not yet set)
   let convexAthleteData: any = null;
@@ -114,7 +134,7 @@ export default function Home() {
     // Graceful fallback for offline mode
   }
 
-  // Generate / Load Device ID on mount
+  // Generate / Load Device ID & XP on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let storedDeviceId = localStorage.getItem('vectr_device_id');
@@ -123,6 +143,12 @@ export default function Home() {
         localStorage.setItem('vectr_device_id', storedDeviceId);
       }
       setDeviceId(storedDeviceId);
+
+      const storedXp = localStorage.getItem('vectr_user_xp');
+      if (storedXp) setUserXp(parseInt(storedXp, 10));
+
+      const storedWater = localStorage.getItem('vectr_water_amount');
+      if (storedWater) setWaterAmount(parseFloat(storedWater));
     }
   }, []);
 
@@ -143,6 +169,30 @@ export default function Home() {
       setProtocol(hydratedProtocol);
     }
   }, []);
+
+  // Live Workout Session Timer Tick
+  useEffect(() => {
+    let interval: any = null;
+    if (isLiveActive) {
+      interval = setInterval(() => {
+        setLiveSeconds(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isLiveActive]);
+
+  const handleToggleLiveSession = () => {
+    if (!isLiveActive) {
+      setIsLiveActive(true);
+      feedback.triggerHaptic([50, 50, 100]);
+      feedback.playSetComplete();
+      awardXp(50, '⚡ LIVE SESSION STARTED');
+    } else {
+      setIsLiveActive(false);
+      feedback.triggerHaptic([80, 40, 80]);
+      awardXp(100, '🏆 WORKOUT CONQUERED');
+    }
+  };
 
   // Sync state from Convex when cloud data updates
   useEffect(() => {
@@ -180,6 +230,9 @@ export default function Home() {
         isPro,
       });
 
+      localStorage.setItem('vectr_user_xp', userXp.toString());
+      localStorage.setItem('vectr_water_amount', waterAmount.toString());
+
       // Also sync profile changes to Convex if online
       if (upsertAthleteMutation && effectiveUserId) {
         upsertAthleteMutation({
@@ -193,7 +246,7 @@ export default function Home() {
         }).catch(() => {});
       }
     }
-  }, [calibration, completedSets, completedFuel, completedAvoid, streakCount, completedWorkouts, isPro, effectiveUserId]);
+  }, [calibration, completedSets, completedFuel, completedAvoid, streakCount, completedWorkouts, isPro, userXp, waterAmount, effectiveUserId]);
 
   // Auto-regenerate whenever calibration state changes
   useEffect(() => {
@@ -210,6 +263,7 @@ export default function Home() {
       interval = setInterval(() => {
         setRestTimer(prev => {
           if (prev.remainingSeconds <= 1) {
+            feedback.playRestFinished();
             return {
               ...prev,
               remainingSeconds: 0,
@@ -293,7 +347,7 @@ export default function Home() {
   const handleToggleSound = () => {
     setRestTimer(prev => {
       const nextSound = !prev.soundEnabled;
-      sounds.enabled = nextSound;
+      feedback.soundEnabled = nextSound;
       return {
         ...prev,
         soundEnabled: nextSound,
@@ -344,7 +398,6 @@ export default function Home() {
         setProtocol(nextProtocol);
       }
     } catch {
-      // Local fallback
       setIsAiLive(false);
       const nextProtocol = generateDailyProtocol(calibration);
       setProtocol(nextProtocol);
@@ -356,10 +409,11 @@ export default function Home() {
 
   const handleIncrementStreak = () => {
     setStreakCount(prev => prev + 1);
-    sounds.playDailyCleared();
+    feedback.playLevelUp();
+    awardXp(150, '🔥 STREAK EXTENDED');
   };
 
-  // Toggle individual set checkbox with 0ms optimistic UI + Convex Cloud sync
+  // Toggle individual set checkbox with high-dopamine feedback & XP
   const handleToggleSet = (exercise: Exercise, setIndex: number) => {
     const key = `${exercise.id}_set_${setIndex}`;
     const nextState = !completedSets[key];
@@ -371,8 +425,24 @@ export default function Home() {
     }));
 
     if (nextState) {
-      sounds.playSetComplete();
+      feedback.playSetComplete();
+      awardXp(25, '⚡ SET CLEARED');
       handleTriggerRestTimer(exercise.name, setIndex + 1, exercise.sets, exercise.restSeconds);
+
+      // Check if all sets for this exercise are now cleared
+      let allSetsDone = true;
+      for (let i = 0; i < exercise.sets; i++) {
+        if (i !== setIndex && !completedSets[`${exercise.id}_set_${i}`]) {
+          allSetsDone = false;
+          break;
+        }
+      }
+      if (allSetsDone) {
+        setTimeout(() => {
+          feedback.playExerciseComplete();
+          awardXp(100, `🏆 ${exercise.name.toUpperCase()} COMPLETE!`);
+        }, 200);
+      }
     }
 
     // Cloud sync to Convex
@@ -419,14 +489,18 @@ export default function Home() {
     }));
 
     if (!allDone) {
-      sounds.playSetComplete();
+      feedback.playExerciseComplete();
+      awardXp(100, `🏆 ${exercise.name.toUpperCase()} CLEARED!`);
       handleTriggerRestTimer(exercise.name, exercise.sets, exercise.sets, exercise.restSeconds);
     }
   };
 
   const handleToggleFuel = (id: string) => {
     const next = !completedFuel[id];
-    if (next) sounds.playSetComplete();
+    if (next) {
+      feedback.playSetComplete();
+      awardXp(50, '🥑 FUEL TARGET LOGGED');
+    }
 
     setCompletedFuel(prev => ({ ...prev, [id]: next }));
 
@@ -442,9 +516,23 @@ export default function Home() {
     }
   };
 
+  const handleIncrementWater = (delta: number) => {
+    setWaterAmount(prev => {
+      const next = Math.max(0.5, Math.min(6.0, +(prev + delta).toFixed(1)));
+      if (next >= 3.5 && !completedFuel['fuel_2']) {
+        handleToggleFuel('fuel_2');
+      }
+      feedback.triggerHaptic(20);
+      return next;
+    });
+  };
+
   const handleToggleAvoid = (id: string) => {
     const next = !completedAvoid[id];
-    if (next) sounds.playSetComplete();
+    if (next) {
+      feedback.playSetComplete();
+      awardXp(50, '🛡️ GUARDRAIL HELD FIRM');
+    }
 
     setCompletedAvoid(prev => ({ ...prev, [id]: next }));
 
@@ -535,6 +623,7 @@ export default function Home() {
           res.directive.quote = cloudResult.coachBriefing;
           const updated = applyCoachAdjustment(protocol, res);
           setProtocol(updated);
+          awardXp(50, '⚡ AI ADAPTATION ACTIVE');
           return;
         }
       }
@@ -554,6 +643,7 @@ export default function Home() {
             ...res.adjustedCalibration,
           }));
         }
+        awardXp(30, '⚡ OFFLINE OVERRIDE ACTIVE');
       }
     } catch {
       setIsAiLive(false);
@@ -597,7 +687,8 @@ export default function Home() {
     setStreakCount(nextState.streakCount);
     setCompletedWorkouts(nextState.completedWorkouts);
 
-    sounds.playDailyCleared();
+    feedback.playLevelUp();
+    awardXp(250, '🎉 24-HOUR RESET BONUS');
   };
 
   // Calculations for badges
@@ -634,7 +725,7 @@ export default function Home() {
       {/* Main SaaS Workspace Container with Safe-Area bottom padding */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-5 sm:px-6 pb-28">
         {/* ========================================================= */}
-        {/* TAB 1: WORKOUT (DO Session + Coach Briefing + Sticky Timer) */}
+        {/* TAB 1: WORKOUT (DO Session + Spotlight + Live Controller) */}
         {/* ========================================================= */}
         {activeTab === 'workout' && (
           <div className="space-y-6">
@@ -657,6 +748,11 @@ export default function Home() {
               onToggleAvoid={handleToggleAvoid}
               onResetSession={handleResetSession}
               showFuelAndRules={false}
+              userXp={userXp}
+              floatingXp={floatingXp}
+              isLiveActive={isLiveActive}
+              liveSeconds={liveSeconds}
+              onToggleLiveSession={handleToggleLiveSession}
             />
           </div>
         )}
@@ -685,113 +781,188 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 3: FUEL & RULES (NEED & AVOID Checklists)             */}
+        {/* TAB 3: FUEL & RULES (Interactive High-Affordance Cards)   */}
         {/* ========================================================= */}
         {activeTab === 'fuel' && (
           <div className="space-y-6">
-            <div className="pb-1">
-              <h2 className="text-base font-bold text-white tracking-tight">
-                Nutrition Targets & Guardrails
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Log daily macronutrient goals, hydration, sleep hygiene, and discipline anti-goals.
-              </p>
+            <div className="pb-1 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-white tracking-tight">
+                  Nutrition Targets & Guardrails
+                </h2>
+                <p className="text-xs text-zinc-400">
+                  Earn +50 XP per locked target. Maintain your daily discipline score.
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="font-mono-numbers text-sm font-bold text-[#A3E635]">
+                  {completedFuelCount + completedAvoidCount} / {totalFuelCount + totalAvoidCount}
+                </span>
+                <span className="block text-[10px] text-zinc-500 uppercase">Cleared</span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* PILLAR 02 // NEED */}
-              <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3 shadow-sm">
+              {/* PILLAR 02 // NEED (Fuel & Hydration) */}
+              <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3.5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                  <h3 className="text-xs font-bold text-white tracking-tight">
+                  <h3 className="text-xs font-bold text-white tracking-tight uppercase">
                     Fuel & Recovery Targets
                   </h3>
-                  <span className="text-[11px] font-mono-numbers text-zinc-400">
-                    {completedFuelCount}/{totalFuelCount} Logged
+                  <span className="text-[11px] font-mono-numbers text-[#A3E635]">
+                    {completedFuelCount}/{totalFuelCount} Locked
                   </span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {protocol.fuelTargets.map(target => {
                     const isDone = !!completedFuel[target.id];
+                    const isWaterTarget = target.id === 'fuel_2';
 
                     return (
                       <div
                         key={target.id}
-                        onClick={() => handleToggleFuel(target.id)}
-                        className={`cursor-pointer rounded-xl border p-3.5 transition select-none touch-manipulation active:scale-[0.99] ${
+                        className={`rounded-xl border p-4 transition-all ${
                           isDone
-                            ? 'border-sky-500/40 bg-sky-500/[0.08]'
-                            : 'border-white/[0.06] bg-[#18181C] hover:border-white/[0.12]'
+                            ? 'border-[#A3E635]/60 bg-[#141a12] shadow-[0_0_12px_rgba(163,230,53,0.1)]'
+                            : 'border-white/[0.06] bg-[#18181C]'
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-zinc-400">
+                          <span className="text-xs font-semibold text-zinc-200">
                             {target.label}
                           </span>
-                          <span className={`h-5 w-5 rounded-md flex items-center justify-center border ${
-                            isDone
-                              ? 'bg-sky-400 border-sky-400 text-zinc-950'
-                              : 'border-zinc-700 bg-transparent'
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isDone ? 'bg-[#A3E635]/20 text-[#A3E635]' : 'bg-white/[0.06] text-zinc-400'
                           }`}>
-                            {isDone && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                            {isDone ? '+50 XP EARNED' : '+50 XP'}
                           </span>
                         </div>
 
-                        <div className={`mt-1 font-mono-numbers text-lg font-bold ${
-                          isDone ? 'text-sky-300' : 'text-white'
-                        }`}>
-                          {target.value}
+                        {/* Value Display */}
+                        <div className="my-2 flex items-baseline gap-2">
+                          <span className={`font-mono-numbers text-2xl font-black ${
+                            isDone ? 'text-[#A3E635]' : 'text-white'
+                          }`}>
+                            {isWaterTarget ? `${waterAmount}L` : target.value}
+                          </span>
+                          <span className="text-xs text-zinc-400">
+                            {target.detail}
+                          </span>
                         </div>
-                        <p className="mt-0.5 text-xs text-zinc-400">
-                          {target.detail}
-                        </p>
+
+                        {/* Interactive Water Increments for Hydration card */}
+                        {isWaterTarget && (
+                          <div className="mb-3 flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleIncrementWater(-0.5)}
+                              className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-mono-numbers text-zinc-300 transition"
+                            >
+                              -0.5L
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleIncrementWater(0.5)}
+                              className="h-8 px-3 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-xs font-mono-numbers text-sky-300 font-semibold transition"
+                            >
+                              +0.5L
+                            </button>
+                            <span className="text-[11px] text-zinc-500 font-mono-numbers">
+                              Goal: 3.5L
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Full-Width High-Affordance Tap Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFuel(target.id)}
+                          className={`w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all touch-manipulation active:scale-[0.98] ${
+                            isDone
+                              ? 'bg-[#A3E635] text-zinc-950 shadow-[0_0_10px_rgba(163,230,53,0.3)]'
+                              : 'bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/[0.08]'
+                          }`}
+                        >
+                          {isDone ? (
+                            <>
+                              <Check className="h-4 w-4 stroke-[3]" />
+                              <span>✓ LOCKED IN · +50 XP EARNED</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="h-2 w-2 rounded-full bg-white/40" />
+                              <span>TAP TO COMPLETE · +50 XP</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* PILLAR 03 // AVOID */}
-              <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3 shadow-sm">
+              {/* PILLAR 03 // AVOID (Discipline Guardrails) */}
+              <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3.5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                  <h3 className="text-xs font-bold text-white tracking-tight">
-                    Discipline Guardrails (Anti-Goals)
+                  <h3 className="text-xs font-bold text-white tracking-tight uppercase">
+                    Discipline Guardrails
                   </h3>
-                  <span className="text-[11px] font-mono-numbers text-zinc-400">
+                  <span className="text-[11px] font-mono-numbers text-emerald-400">
                     {completedAvoidCount}/{totalAvoidCount} Maintained
                   </span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {protocol.avoidRules.map(rule => {
                     const isDone = !!completedAvoid[rule.id];
 
                     return (
                       <div
                         key={rule.id}
-                        onClick={() => handleToggleAvoid(rule.id)}
-                        className={`cursor-pointer rounded-xl border p-3.5 transition select-none touch-manipulation active:scale-[0.99] ${
+                        className={`rounded-xl border p-4 transition-all ${
                           isDone
-                            ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
-                            : 'border-white/[0.06] bg-[#18181C] hover:border-white/[0.12]'
+                            ? 'border-emerald-500/60 bg-[#121c16] shadow-[0_0_12px_rgba(16,185,129,0.1)]'
+                            : 'border-white/[0.06] bg-[#18181C]'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-zinc-200">
                             {rule.title}
                           </span>
-                          <span className={`h-5 w-5 rounded-md flex items-center justify-center border ${
-                            isDone
-                              ? 'bg-emerald-400 border-emerald-400 text-zinc-950'
-                              : 'border-zinc-700 bg-transparent'
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/15 text-red-300'
                           }`}>
-                            {isDone && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                            {isDone ? 'DISCIPLINE HELD' : 'ANTI-GOAL'}
                           </span>
                         </div>
 
-                        <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
+                        <p className="my-2 text-xs text-zinc-400 leading-relaxed">
                           {rule.description}
                         </p>
+
+                        {/* Full-Width High-Affordance Guardrail Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAvoid(rule.id)}
+                          className={`w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all touch-manipulation active:scale-[0.98] ${
+                            isDone
+                              ? 'bg-emerald-400 text-zinc-950 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
+                              : 'bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/[0.08]'
+                          }`}
+                        >
+                          {isDone ? (
+                            <>
+                              <Check className="h-4 w-4 stroke-[3]" />
+                              <span>✓ GUARDRAIL HELD FIRM · +50 XP</span>
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="h-3.5 w-3.5 text-zinc-400" />
+                              <span>TAP TO CONFIRM COMPLIANCE · +50 XP</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     );
                   })}
