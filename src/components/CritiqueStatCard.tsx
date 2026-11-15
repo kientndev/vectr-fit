@@ -22,7 +22,9 @@ interface CritiqueStatCardProps {
   recoveryScore?: number;
   currentXp?: number;
   streakCount?: number;
+  tier?: number;
   onOpenScanner?: () => void;
+  onOpenRatingModal?: () => void;
 }
 
 export const CritiqueStatCard: React.FC<CritiqueStatCardProps> = ({
@@ -34,7 +36,9 @@ export const CritiqueStatCard: React.FC<CritiqueStatCardProps> = ({
   recoveryScore = 86,
   currentXp = 1450,
   streakCount = 3,
+  tier,
   onOpenScanner,
+  onOpenRatingModal,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -98,13 +102,21 @@ export const CritiqueStatCard: React.FC<CritiqueStatCardProps> = ({
                 {xpIntoCurrentLevel}/400 XP
               </span>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <h3 className="text-sm font-bold text-white tracking-tight">
-                Critique AI Character Card
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+              <h3 className="text-xs sm:text-sm font-bold text-white tracking-normal font-sans">
+                TIER {tier || calculatedLevel} // {getLevelTitle(calculatedLevel)}
               </h3>
-              <span className="font-mono text-xs font-bold text-[#A3E635] bg-[#A3E635]/15 px-2 py-0.5 rounded-md">
-                {overallScore}/100 Rating
-              </span>
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  if (onOpenRatingModal) onOpenRatingModal();
+                }}
+                title="View Viral 9:16 Shareable Athlete Card"
+                className="font-mono text-[11px] font-bold text-[#A3E635] bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 px-2 py-0.5 rounded-md whitespace-nowrap active:scale-95 transition"
+              >
+                {overallScore}/100 RATING ↗
+              </button>
             </div>
           </div>
         </div>
@@ -117,10 +129,10 @@ export const CritiqueStatCard: React.FC<CritiqueStatCardProps> = ({
                 e.stopPropagation();
                 onOpenScanner();
               }}
-              className="hidden xs:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 text-xs font-bold text-[#A3E635] active:scale-95 transition"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 text-xs font-bold text-[#A3E635] active:scale-95 transition"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Scan Form</span>
+              <span>AI Scan</span>
             </button>
           )}
 

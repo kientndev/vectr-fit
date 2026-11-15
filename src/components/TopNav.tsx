@@ -69,14 +69,6 @@ export const TopNav: React.FC<TopNavProps> = ({
             <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-zinc-300">
               FIT
             </span>
-
-            {/* Cloud Sync Status Indicator */}
-            <div className="flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 text-[10px] text-zinc-400">
-              <span className={`h-1.5 w-1.5 rounded-full ${isCloudConnected ? 'bg-[#A3E635] shadow-[0_0_6px_rgba(163,230,53,0.5)]' : 'bg-amber-400'}`} />
-              <span className="hidden sm:inline font-mono-numbers">
-                {user ? 'CLOUD SYNCED' : 'LOCAL GUEST'}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -191,10 +183,10 @@ export const TopNav: React.FC<TopNavProps> = ({
               <SignInButton mode="modal">
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] px-2.5 py-1 text-xs font-medium text-white transition active:scale-95"
+                  className="flex items-center gap-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.1] px-2.5 py-1 text-xs font-medium text-white transition active:scale-95 whitespace-nowrap"
                 >
-                  <User className="h-3.5 w-3.5 text-zinc-400" />
-                  <span>Sign In</span>
+                  <User className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                  <span className="whitespace-nowrap">Sign In</span>
                 </button>
               </SignInButton>
             ) : (

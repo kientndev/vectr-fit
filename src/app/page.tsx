@@ -24,9 +24,11 @@ import { ProUpgradeModal } from '../components/ProUpgradeModal';
 import { ProHistoryStrip } from '../components/ProHistoryStrip';
 import { BottomNav, MobileTab } from '../components/BottomNav';
 import { OnboardingFlow, OnboardingData } from '../components/OnboardingFlow';
-import { FormCheckCamera } from '../components/FormCheckCamera';
+import { FormCheckCamera, ScannerMode } from '../components/FormCheckCamera';
 import { CritiqueStatCard } from '../components/CritiqueStatCard';
 import { LeaderboardModal, LeaderboardAthlete } from '../components/LeaderboardModal';
+import { CritiqueRatingModal } from '../components/CritiqueRatingModal';
+import { FuelAndRulesProtocol } from '../components/FuelAndRulesProtocol';
 import { feedback } from '../lib/feedback';
 import { Check, Plus, Droplet, Sparkles, Zap, Shield, Heart, Sun, Dumbbell, Moon, Trophy } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
@@ -36,7 +38,7 @@ import { api } from '../../convex/_generated/api';
 export default function Home() {
   // 1. User Identity (Clerk User + Persistent Guest Device ID for unauthenticated mobile APK)
   const [deviceId, setDeviceId] = useState<string>('');
-  
+
   // Safely read user from Clerk
   let clerkUser: any = null;
   try {
@@ -77,17 +79,27 @@ export default function Home() {
   const [userXp, setUserXp] = useState<number>(420);
   const [floatingXp, setFloatingXp] = useState<{ id: number; text: string } | null>(null);
 
-  // Live Workout Session Mode State
-  const [isLiveActive, setIsLiveActive] = useState<boolean>(false);
-  const [liveSeconds, setLiveSeconds] = useState<number>(0);
-
   // Onboarding & AI Form Camera States
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
   const [isCameraOpen, setIsCameraOpen] = useState<boolean>(false);
   const [cameraExerciseName, setCameraExerciseName] = useState<string>('Standard Push-up');
+  const [cameraScannerMode, setCameraScannerMode] = useState<ScannerMode>('FORM');
 
   // Critique AI & Leaderboard Modals
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState<boolean>(false);
+
+  // Dynamic 0-100 Six-Pillar Athlete Rating Stats
+  const [athleteStats, setAthleteStats] = useState({
+    overallScore: 88,
+    potentialScore: 96,
+    strength: 86,
+    postureSymmetry: 90,
+    explosivePower: 84,
+    coreRigidity: 89,
+    disciplineCompliance: 92,
+    cnsRecovery: 88,
+  });
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -206,30 +218,6 @@ export default function Home() {
     }
   }, []);
 
-  // Live Workout Session Timer Tick
-  useEffect(() => {
-    let interval: any = null;
-    if (isLiveActive) {
-      interval = setInterval(() => {
-        setLiveSeconds(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isLiveActive]);
-
-  const handleToggleLiveSession = () => {
-    if (!isLiveActive) {
-      setIsLiveActive(true);
-      feedback.triggerHaptic([50, 50, 100]);
-      feedback.playSetComplete();
-      awardXp(50, '⚡ LIVE SESSION STARTED');
-    } else {
-      setIsLiveActive(false);
-      feedback.triggerHaptic([80, 40, 80]);
-      awardXp(100, '🏆 WORKOUT CONQUERED');
-    }
-  };
-
   // Sync state from Convex when cloud data updates
   useEffect(() => {
     if (convexAthleteData?.profile) {
@@ -282,7 +270,7 @@ export default function Home() {
           coachPersona: calibration.persona,
           streakCount,
           isPro,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
   }, [calibration, completedSets, completedFuel, completedAvoid, streakCount, completedWorkouts, isPro, userXp, waterAmount, effectiveUserId]);
@@ -340,8 +328,16 @@ export default function Home() {
   };
 
   // Handler: Open Form Check Camera for an exercise
-  const handleOpenFormCamera = (exerciseName: string) => {
+  const handleOpenFormCamera = (exerciseName: string, mode: ScannerMode = 'FORM') => {
     setCameraExerciseName(exerciseName);
+    setCameraScannerMode(mode);
+    setIsCameraOpen(true);
+  };
+
+  // Handler: Open Camera specifically for Meal & Macro Critique
+  const handleSnapFuelProof = (targetId: string, label: string) => {
+    setCameraExerciseName(label);
+    setCameraScannerMode('MEAL');
     setIsCameraOpen(true);
   };
 
@@ -365,6 +361,11 @@ export default function Home() {
           persona: calibration.persona,
         });
         awardXp(75, '🎯 FORM CHECK COMPLETED');
+        setAthleteStats(prev => {
+          const nextStrength = Math.min(100, Math.max(70, res.formScore));
+          const nextOverall = Math.round((nextStrength + prev.postureSymmetry + prev.explosivePower + prev.coreRigidity + prev.cnsRecovery) / 5);
+          return { ...prev, strength: nextStrength, overallScore: nextOverall };
+        });
         return {
           formScore: res.formScore,
           whatLookedSolid: res.whatLookedSolid,
@@ -376,10 +377,15 @@ export default function Home() {
     }
 
     awardXp(75, '🎯 FORM CHECK COMPLETED');
+    setAthleteStats(prev => {
+      const nextStrength = 88;
+      const nextOverall = Math.round((nextStrength + prev.postureSymmetry + prev.explosivePower + prev.coreRigidity + prev.cnsRecovery) / 5);
+      return { ...prev, strength: nextStrength, overallScore: nextOverall };
+    });
     return {
-      formScore: 92,
-      whatLookedSolid: 'Rigid kinetic tension maintained through scapular depression and hip lockout.',
-      microCorrection: 'Slow the eccentric descent by ~0.5s to maximize active tendon strain.',
+      formScore: 88,
+      whatLookedSolid: 'Clean control and cadence throughout movement path.',
+      microCorrection: 'Keep core braced and maintain neutral cervical spine.',
     };
   };
 
@@ -397,97 +403,129 @@ export default function Home() {
           persona: calibration.persona,
         });
         awardXp(120, '🧍 POSTURE CRITIQUE COMPLETE');
+        setAthleteStats(prev => ({
+          ...prev,
+          overallScore: res.overallScore,
+          potentialScore: res.potentialScore,
+          postureSymmetry: res.shoulderSymmetry,
+          coreRigidity: res.coreAlignment,
+        }));
         return res;
       } catch (e) {
         console.warn('Convex posture action error:', e);
       }
     }
     awardXp(120, '🧍 POSTURE CRITIQUE COMPLETE');
-    return {
+    setAthleteStats(prev => ({
+      ...prev,
       overallScore: 88,
       potentialScore: 96,
-      spinalPosture: 86,
-      shoulderSymmetry: 90,
-      coreAlignment: 85,
-      athleticFrame: 89,
-      primaryCritique: 'Slight rounded shoulder posture with forward head bias. Lower pelvic alignment is balanced.',
-      correctiveDrills: [
-        { name: 'Prone Scapular Y-T-W Raises', reps: '2 sets × 12 reps', cue: 'Depress traps; tuck chin.' },
-        { name: 'Dead Bug with Hollow Core Press', reps: '3 sets × 10 reps/side', cue: 'Glue lumbar flat to the floor.' },
-      ],
-    };
-  };
-
-  // Handler: Critique Meal & Macros (Mode C)
-  const handleCritiqueMealSnapshot = async (payload: {
-    imageBase64: string;
-  }) => {
-    if (critiqueMealAction) {
-      try {
-        const res = await critiqueMealAction({
-          userId: effectiveUserId,
-          imageBase64: payload.imageBase64,
-        });
-        awardXp(100, '🥩 MEAL SCANNED & LOGGED');
-        return res;
-      } catch (e) {
-        console.warn('Convex meal action error:', e);
-      }
-    }
-    awardXp(100, '🥩 MEAL SCANNED & LOGGED');
-    return {
-      mealName: 'Grilled Chicken, Jasmine Rice & Steamed Greens',
-      proteinGrams: 46,
-      calories: 560,
-      carbsGrams: 52,
-      fatsGrams: 14,
-      cleanScore: 94,
-      critique: 'Optimal leucine trigger (>3g) achieved with complete amino acid profile. Clean complex carbohydrate partitioning.',
-    };
-  };
-
-  // 1-Tap Add Corrective Drill to Today's Workout
-  const handleAddCorrectiveDrill = (drill: { name: string; reps: string; cue: string }) => {
-    const newExercise: Exercise = {
-      id: `drill_${Date.now()}`,
-      name: drill.name,
-      targetMuscle: 'Corrective & Kinetic Posture',
-      sets: 2,
-      repsOrHold: drill.reps,
-      restSeconds: 45,
-      rpe: 'RPE 6.5',
-      formCue: drill.cue,
-      isAdapted: true,
-      protectionTag: 'Posture Drill',
-      category: 'FINISHER',
-    };
-
-    setProtocol(prev => {
-      const nextBlocks = [...prev.blocks];
-      if (nextBlocks.length > 0) {
-        nextBlocks[nextBlocks.length - 1] = {
-          ...nextBlocks[nextBlocks.length - 1],
-          exercises: [...nextBlocks[nextBlocks.length - 1].exercises, newExercise],
-        };
-      }
-      return { ...prev, blocks: nextBlocks };
-    });
-
-    awardXp(50, '⚡ CORRECTIVE DRILL ADDED');
-    feedback.playSetComplete();
-  };
-
-  // Auto-complete fuel target when meal is logged
-  const handleMealLogged = (protein: number) => {
-    setCompletedFuel(prev => ({
-      ...prev,
-      fuel_1: true,
+      postureSymmetry: 90,
+      coreRigidity: 85,
     }));
-    awardXp(50, `🍗 ${protein}g PROTEIN LOCKED`);
-  };
+        return {
+          overallScore: 88,
+          potentialScore: 96,
+          spinalPosture: 86,
+          shoulderSymmetry: 90,
+          coreAlignment: 85,
+          athleticFrame: 89,
+          primaryCritique: 'Slight rounded shoulder posture with forward head bias. Lower pelvic alignment is balanced.',
+          correctiveDrills: [
+            { name: 'Prone Scapular Y-T-W Raises', reps: '2 sets × 12 reps', cue: 'Depress traps; tuck chin.' },
+            { name: 'Dead Bug with Hollow Core Press', reps: '3 sets × 10 reps/side', cue: 'Glue lumbar flat to the floor.' },
+          ],
+        };
+      };
 
-  // Countdown effect for restTimer
-  useEffect(() => {
+      // Handler: Critique Meal & Macros (Mode C)
+      const handleCritiqueMealSnapshot = async (payload: {
+        imageBase64: string;
+      }) => {
+        if (critiqueMealAction) {
+          try {
+            const res = await critiqueMealAction({
+              userId: effectiveUserId,
+              imageBase64: payload.imageBase64,
+            });
+            awardXp(100, '🥩 MEAL SCANNED & LOGGED');
+            setAthleteStats(prev => ({
+              ...prev,
+              cnsRecovery: Math.min(99, prev.cnsRecovery + 2),
+              overallScore: Math.min(99, prev.overallScore + 1),
+            }));
+            return res;
+          } catch (e) {
+            console.warn('Convex meal action error:', e);
+          }
+        }
+        awardXp(100, '🥩 MEAL SCANNED & LOGGED');
+        setAthleteStats(prev => ({
+          ...prev,
+          cnsRecovery: Math.min(99, prev.cnsRecovery + 2),
+          overallScore: Math.min(99, prev.overallScore + 1),
+        }));
+        return {
+          mealName: 'Grilled Chicken, Jasmine Rice & Steamed Greens',
+          proteinGrams: 46,
+          calories: 560,
+          carbsGrams: 52,
+          fatsGrams: 14,
+          cleanScore: 94,
+          critique: 'Optimal leucine trigger (>3g) achieved with complete amino acid profile. Clean complex carbohydrate partitioning.',
+        };
+      };
+
+      // 1-Tap Add Corrective Drill to Today's Workout
+      const handleAddCorrectiveDrill = (drill: { name: string; reps: string; cue: string }) => {
+        const newExercise: Exercise = {
+          id: `drill_${Date.now()}`,
+          name: drill.name,
+          category: 'FINISHER',
+          targetMuscle: 'Corrective & Kinetic Posture',
+          sets: 2,
+          repsOrHold: drill.reps,
+          restSeconds: 45,
+          rpe: 'RPE 6.5',
+          formCue: drill.cue,
+          isAdapted: true,
+          protectionTag: 'Posture Drill',
+        };
+
+        setProtocol(prev => {
+          const nextBlocks = [...prev.blocks];
+          if (nextBlocks.length > 0) {
+            nextBlocks[nextBlocks.length - 1] = {
+              ...nextBlocks[nextBlocks.length - 1],
+              exercises: [...nextBlocks[nextBlocks.length - 1].exercises, newExercise],
+            };
+          }
+          return { ...prev, blocks: nextBlocks };
+        });
+
+        awardXp(50, '⚡ CORRECTIVE DRILL ADDED');
+        feedback.playSetComplete();
+      };
+
+      // Auto-complete fuel target when meal is logged via Camera Proof
+      const handleMealLogged = (protein: number) => {
+        // Find any macro target or complete active non-hydration targets
+        const macroTarget = protocol.fuelTargets.find(
+          t => t.id === 'fuel_protein' || t.label.toLowerCase().includes('protein') || t.label.toLowerCase().includes('collagen')
+        );
+        if (macroTarget) {
+          handleToggleFuel(macroTarget.id);
+        } else {
+          setCompletedFuel(prev => ({
+            ...prev,
+            fuel_1: true,
+          }));
+        }
+        awardXp(100, `🥩 ${protein}g MEAL PROOF CRITIQUE (+100 XP · 2x)`);
+      };
+
+      // Countdown effect for restTimer
+      useEffect(() => {
     let interval: any = null;
     if (restTimer.isActive && restTimer.isRunning && restTimer.remainingSeconds > 0) {
       interval = setInterval(() => {
@@ -683,7 +721,7 @@ export default function Home() {
         type: 'set',
         itemId: key,
         completed: nextState,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
@@ -709,7 +747,7 @@ export default function Home() {
           type: 'set',
           itemId: key,
           completed: !allDone,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
 
@@ -742,7 +780,7 @@ export default function Home() {
         type: 'fuel',
         itemId: id,
         completed: next,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
@@ -774,7 +812,7 @@ export default function Home() {
         type: 'avoid',
         itemId: id,
         completed: next,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   };
 
@@ -814,7 +852,7 @@ export default function Home() {
             blockIndex,
             exerciseIndex,
             swappedExercise: swapped,
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
 
@@ -932,6 +970,10 @@ export default function Home() {
   const totalAvoidCount = protocol.avoidRules.length;
   const completedAvoidCount = Object.values(completedAvoid).filter(Boolean).length;
 
+  const totalCheckable = totalSetsCount + totalFuelCount + totalAvoidCount;
+  const completedCheckable = completedSetsCount + completedFuelCount + completedAvoidCount;
+  const disciplineScore = totalCheckable > 0 ? Math.round((completedCheckable / totalCheckable) * 100) : 92;
+
   return (
     <div className="min-h-screen bg-[#09090B] text-zinc-100 flex flex-col font-sans select-none">
       {/* Sleek Top App Header with Clerk / Guest Status */}
@@ -955,11 +997,18 @@ export default function Home() {
 
       {/* Main SaaS Workspace Container with Safe-Area bottom padding */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-5 sm:px-6 pb-28 space-y-5">
-        {/* Critique AI Character Stat Card (LVL 1 to 10 progression) */}
+        {/* Dynamic Athlete Status Stat Card (LVL 1 to 10 progression) */}
         <CritiqueStatCard
+          tier={protocol.tier}
           currentXp={userXp}
           streakCount={streakCount}
-          onOpenScanner={() => handleOpenFormCamera('Standard Push-up')}
+          overallScore={athleteStats.overallScore}
+          strength={athleteStats.strength}
+          discipline={disciplineScore}
+          formScore={athleteStats.postureSymmetry}
+          recoveryScore={athleteStats.cnsRecovery}
+          onOpenScanner={() => handleOpenFormCamera('Standard Push-up', 'FORM')}
+          onOpenRatingModal={() => setIsRatingModalOpen(true)}
         />
 
         {/* ========================================================= */}
@@ -988,9 +1037,6 @@ export default function Home() {
               showFuelAndRules={false}
               userXp={userXp}
               floatingXp={floatingXp}
-              isLiveActive={isLiveActive}
-              liveSeconds={liveSeconds}
-              onToggleLiveSession={handleToggleLiveSession}
               onOpenFormCamera={handleOpenFormCamera}
             />
           </div>
@@ -1021,262 +1067,21 @@ export default function Home() {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 3: FUEL & RULES (Interactive High-Affordance Cards)   */}
+        {/* TAB 3: FUEL & RULES (Interactive Bio-Telemetry & Oaths)   */}
         {/* ========================================================= */}
         {activeTab === 'fuel' && (
-          <div className="space-y-6">
-            <div className="pb-1 flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-white tracking-tight">
-                  Time-Slotted Protocols & Discipline
-                </h2>
-                <p className="text-xs text-zinc-400">
-                  Earn +50 XP per locked target. Scientific timing for peak hormonal & kinetic output.
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="font-mono-numbers text-sm font-bold text-[#A3E635]">
-                  {completedFuelCount + completedAvoidCount} / {totalFuelCount + totalAvoidCount}
-                </span>
-                <span className="block text-[10px] text-zinc-500 uppercase">Cleared</span>
-              </div>
-            </div>
-
-            {/* Quick 60s Lock-In Challenge Card */}
-            <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/[0.08] to-amber-500/[0.02] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-black font-extrabold text-sm shadow-[0_0_15px_rgba(251,191,36,0.4)]">
-                  ⚡
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
-                      Daily Dopamine Drill
-                    </span>
-                    <span className="rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.2">
-                      +150 BONUS XP
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-bold text-white mt-0.5">
-                    🔥 60s Camera Lock-In Challenge: 15 Strict Form Push-ups
-                  </h4>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleOpenFormCamera('Standard Push-up')}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-400 text-black font-bold text-xs hover:bg-amber-300 active:scale-95 transition shadow-sm"
-              >
-                Launch Challenge
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* PILLAR 02 // TIME-SLOTTED RECOVERY TARGETS */}
-              <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3.5 shadow-sm">
-                <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <Sun className="h-4 w-4 text-amber-400" />
-                    <h3 className="text-xs font-bold text-white tracking-tight uppercase">
-                      Time-Slotted Fuel Targets
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-mono-numbers text-[#A3E635]">
-                    {completedFuelCount}/{totalFuelCount} Locked
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {protocol.fuelTargets.map((target, idx) => {
-                    const isDone = !!completedFuel[target.id];
-                    const isWaterTarget = target.id === 'fuel_2';
-                    const timeSlot = idx === 0 ? 'Training Window' : idx === 1 ? 'Morning Lock-In' : 'Evening Recovery';
-                    const whyItMatters =
-                      idx === 0
-                        ? 'Triggers mTOR muscle protein synthesis and supplies essential BCAAs.'
-                        : idx === 1
-                        ? 'Maintains cell volumization, neural conductivity, and prevents cramping.'
-                        : 'Activates parasympathetic nervous system for GH release during REM sleep.';
-
-                    return (
-                      <div
-                        key={target.id}
-                        className={`rounded-xl border p-4 transition-all ${
-                          isDone
-                            ? 'border-[#A3E635]/60 bg-[#141a12] shadow-[0_0_12px_rgba(163,230,53,0.1)]'
-                            : 'border-white/[0.06] bg-[#18181C]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono font-semibold text-zinc-300">
-                            {timeSlot}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            isDone ? 'bg-[#A3E635]/20 text-[#A3E635]' : 'bg-white/[0.06] text-zinc-400'
-                          }`}>
-                            {isDone ? '+50 XP EARNED' : '+50 XP'}
-                          </span>
-                        </div>
-
-                        {/* Value Display */}
-                        <div className="my-2 flex items-baseline justify-between">
-                          <span className="text-xs font-semibold text-zinc-200">
-                            {target.label}
-                          </span>
-                          <span className={`font-mono-numbers text-xl font-black ${
-                            isDone ? 'text-[#A3E635]' : 'text-white'
-                          }`}>
-                            {isWaterTarget ? `${waterAmount}L` : target.value}
-                          </span>
-                        </div>
-
-                        {/* Scientific Why It Matters Badge */}
-                        <div className="p-2 rounded-lg bg-black/40 border border-white/[0.04] mb-3 text-[11px] text-zinc-400 leading-snug">
-                          <span className="text-[#A3E635] font-semibold">Why it matters: </span>
-                          {whyItMatters}
-                        </div>
-
-                        {/* Interactive Water Increments */}
-                        {isWaterTarget && (
-                          <div className="mb-3 flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleIncrementWater(-0.5)}
-                              className="h-8 px-3 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-mono-numbers text-zinc-300 transition"
-                            >
-                              -0.5L
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleIncrementWater(0.5)}
-                              className="h-8 px-3 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-xs font-mono-numbers text-sky-300 font-semibold transition"
-                            >
-                              +0.5L
-                            </button>
-                            <span className="text-[11px] text-zinc-500 font-mono-numbers">
-                              Goal: 3.5L
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Full-Width High-Affordance Tap Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleFuel(target.id)}
-                          className={`w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all touch-manipulation active:scale-[0.98] ${
-                            isDone
-                              ? 'bg-[#A3E635] text-zinc-950 shadow-[0_0_10px_rgba(163,230,53,0.3)]'
-                              : 'bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/[0.08]'
-                          }`}
-                        >
-                          {isDone ? (
-                            <>
-                              <Check className="h-4 w-4 stroke-[3]" />
-                              <span>✓ LOCKED IN · +50 XP EARNED</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="h-2 w-2 rounded-full bg-white/40" />
-                              <span>TAP TO COMPLETE · +50 XP</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* PILLAR 03 // AVOID (Discipline Guardrails) */}
-              <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3.5 shadow-sm">
-                <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                  <div className="flex items-center gap-1.5">
-                    <Moon className="h-4 w-4 text-emerald-400" />
-                    <h3 className="text-xs font-bold text-white tracking-tight uppercase">
-                      Time-Slotted Discipline Guardrails
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-mono-numbers text-emerald-400">
-                    {completedAvoidCount}/{totalAvoidCount} Maintained
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  {protocol.avoidRules.map((rule, idx) => {
-                    const isDone = !!completedAvoid[rule.id];
-                    const timeSlot = idx === 0 ? 'All Day Window' : idx === 1 ? 'During Workout' : 'Evening Sleep Window';
-                    const whyAvoidMatters =
-                      idx === 0
-                        ? 'Liquid fructose bypasses liver glycogen saturation and elevates visceral fat storage.'
-                        : idx === 1
-                        ? 'Training past true technical failure fries central motor unit firing and risks rotator cuff strain.'
-                        : 'Blue light spectrum inhibits pineal melatonin release by up to 58%, reducing deep stage 3 recovery.';
-
-                    return (
-                      <div
-                        key={rule.id}
-                        className={`rounded-xl border p-4 transition-all ${
-                          isDone
-                            ? 'border-emerald-500/60 bg-[#121c16] shadow-[0_0_12px_rgba(16,185,129,0.1)]'
-                            : 'border-white/[0.06] bg-[#18181C]'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono font-semibold text-zinc-300">
-                            {timeSlot}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/15 text-red-300'
-                          }`}>
-                            {isDone ? 'DISCIPLINE HELD' : 'ANTI-GOAL'}
-                          </span>
-                        </div>
-
-                        <div className="my-2">
-                          <span className="text-xs font-semibold text-zinc-200">
-                            {rule.title}
-                          </span>
-                          <p className="text-xs text-zinc-400 mt-0.5">
-                            {rule.description}
-                          </p>
-                        </div>
-
-                        {/* Scientific Why It Matters Badge */}
-                        <div className="p-2 rounded-lg bg-black/40 border border-white/[0.04] mb-3 text-[11px] text-zinc-400 leading-snug">
-                          <span className="text-emerald-400 font-semibold">Why it matters: </span>
-                          {whyAvoidMatters}
-                        </div>
-
-                        {/* Full-Width High-Affordance Guardrail Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleAvoid(rule.id)}
-                          className={`w-full min-h-[44px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all touch-manipulation active:scale-[0.98] ${
-                            isDone
-                              ? 'bg-emerald-400 text-zinc-950 shadow-[0_0_10px_rgba(52,211,153,0.3)]'
-                              : 'bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/[0.08]'
-                          }`}
-                        >
-                          {isDone ? (
-                            <>
-                              <Check className="h-4 w-4 stroke-[3]" />
-                              <span>✓ GUARDRAIL HELD FIRM · +50 XP</span>
-                            </>
-                          ) : (
-                            <>
-                              <Shield className="h-3.5 w-3.5 text-zinc-400" />
-                              <span>TAP TO CONFIRM COMPLIANCE · +50 XP</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
+          <FuelAndRulesProtocol
+            protocol={protocol}
+            completedFuel={completedFuel}
+            onToggleFuel={handleToggleFuel}
+            completedAvoid={completedAvoid}
+            onToggleAvoid={handleToggleAvoid}
+            waterAmount={waterAmount}
+            onIncrementWater={handleIncrementWater}
+            onSnapProof={handleSnapFuelProof}
+            onOpenChallengeCam={() => handleOpenFormCamera('Standard Push-up', 'FORM')}
+            awardXp={awardXp}
+          />
         )}
 
         {/* ========================================================= */}
@@ -1348,6 +1153,7 @@ export default function Home() {
         onClose={() => setIsCameraOpen(false)}
         exerciseName={cameraExerciseName}
         coachPersona={calibration.persona}
+        initialMode={cameraScannerMode}
         onAnalyze={handleAnalyzeFormSnapshot}
         onCritiquePosture={handleCritiquePostureSnapshot}
         onCritiqueMeal={handleCritiqueMealSnapshot}
@@ -1362,6 +1168,28 @@ export default function Home() {
         athletes={leaderboardData || []}
         currentUserId={effectiveUserId}
         currentUserXp={userXp}
+      />
+
+      {/* Viral 9:16 Athlete Critique Rating Card Modal */}
+      <CritiqueRatingModal
+        isOpen={isRatingModalOpen}
+        onClose={() => setIsRatingModalOpen(false)}
+        tier={protocol.tier}
+        tierTitle={protocol.tierTitle}
+        athleteCallsign={clerkUser?.fullName || clerkUser?.username || 'ATHLETE-VECTR-01'}
+        overallScore={athleteStats.overallScore}
+        potentialScore={athleteStats.potentialScore}
+        strength={athleteStats.strength}
+        postureSymmetry={athleteStats.postureSymmetry}
+        explosivePower={athleteStats.explosivePower}
+        coreRigidity={athleteStats.coreRigidity}
+        disciplineCompliance={disciplineScore}
+        cnsRecovery={athleteStats.cnsRecovery}
+        onOpenScanner={() => {
+          setIsRatingModalOpen(false);
+          handleOpenFormCamera('Standard Push-up', 'POSTURE');
+        }}
+        onShareAwardXp={() => awardXp(50, '📤 ATHLETE RATING CARD SHARED (+50 XP)')}
       />
     </div>
   );

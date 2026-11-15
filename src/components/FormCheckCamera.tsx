@@ -20,6 +20,7 @@ import {
   User,
   Utensils,
   Plus,
+  Upload,
 } from 'lucide-react';
 
 let CapacitorCamera: any = null;
@@ -78,6 +79,7 @@ interface FormCheckCameraProps {
   }>;
   onAddCorrectiveDrill?: (drill: { name: string; reps: string; cue: string }) => void;
   onMealLogged?: (protein: number) => void;
+  initialMode?: ScannerMode;
 }
 
 export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
@@ -90,13 +92,20 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
   onCritiqueMeal,
   onAddCorrectiveDrill,
   onMealLogged,
+  initialMode,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   // Scanner Mode Switcher (Mode A: FORM | Mode B: POSTURE | Mode C: MEAL)
-  const [scannerMode, setScannerMode] = useState<ScannerMode>('FORM');
+  const [scannerMode, setScannerMode] = useState<ScannerMode>(initialMode || 'FORM');
+
+  useEffect(() => {
+    if (initialMode && isOpen) {
+      setScannerMode(initialMode);
+    }
+  }, [initialMode, isOpen]);
 
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -531,13 +540,35 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     return () => clearTimeout(timer);
   }, [isMetronomeActive, isOpen, scannerMode]);
 
-  // Handle Mode A Snapshot
-  const handleAnalyzeSnapshot = async () => {
+  // File Upload Handling
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = event => {
+      const base64 = event.target?.result as string;
+      if (!base64) return;
+
+      if (scannerMode === 'FORM') {
+        runFormAnalysis(base64);
+      } else if (scannerMode === 'POSTURE') {
+        runPostureScan(base64);
+      } else if (scannerMode === 'MEAL') {
+        runMealCritique(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Reusable Mode A Runner
+  const runFormAnalysis = async (imageBase64: string) => {
     feedback.hapticLight();
     setIsAnalyzing(true);
     setAnalysisResult(null);
-
-    const imageBase64 = captureCurrentFrame();
 
     try {
       if (onAnalyze) {
@@ -575,13 +606,11 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     }
   };
 
-  // Handle Mode B Posture & Physique Scan
-  const handleScanPosture = async () => {
+  // Reusable Mode B Runner
+  const runPostureScan = async (imageBase64: string) => {
     feedback.hapticLight();
     setIsAnalyzing(true);
     setPostureResult(null);
-
-    const imageBase64 = captureCurrentFrame();
 
     try {
       if (onCritiquePosture) {
@@ -617,13 +646,11 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     }
   };
 
-  // Handle Mode C Meal Macro Critique
-  const handleCritiqueMeal = async () => {
+  // Reusable Mode C Runner
+  const runMealCritique = async (imageBase64: string) => {
     feedback.hapticLight();
     setIsAnalyzing(true);
     setMealResult(null);
-
-    const imageBase64 = captureCurrentFrame();
 
     try {
       if (onCritiqueMeal) {
@@ -654,6 +681,21 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // Handle Mode A Snapshot (Camera)
+  const handleAnalyzeSnapshot = () => {
+    runFormAnalysis(captureCurrentFrame());
+  };
+
+  // Handle Mode B Posture & Physique Scan (Camera)
+  const handleScanPosture = () => {
+    runPostureScan(captureCurrentFrame());
+  };
+
+  // Handle Mode C Meal Macro Critique (Camera)
+  const handleCritiqueMeal = () => {
+    runMealCritique(captureCurrentFrame());
   };
 
   if (!isOpen) return null;
@@ -993,8 +1035,17 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           </div>
         )}
 
+        {/* Hidden File Input for Gallery / PC Photo Uploads */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+
         {/* Bottom Action Footer */}
-        <div className="p-3.5 sm:p-4 bg-[#121215] border-t border-white/[0.08] flex items-center justify-between gap-3 z-20">
+        <div className="p-3.5 sm:p-4 bg-[#121215] border-t border-white/[0.08] flex items-center justify-between gap-2.5 z-20">
           {scannerMode === 'FORM' && (
             <>
               <button
@@ -1007,9 +1058,20 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
                   setLiveFeedbackCue(exerciseRule.readyCue);
                 }}
                 className="flex items-center gap-1 px-3 py-3 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white bg-white/[0.04] border border-white/[0.08] active:scale-95 transition"
+                title="Reset Reps"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                <span>Reset</span>
+                <span className="hidden xs:inline">Reset</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload Photo from Gallery"
+                className="flex items-center gap-1.5 px-3.5 py-3 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] active:scale-95 transition whitespace-nowrap"
+              >
+                <Upload className="h-3.5 w-3.5 text-[#A3E635]" />
+                <span className="text-xs">Upload</span>
               </button>
 
               <button
@@ -1021,12 +1083,12 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
                 {isAnalyzing ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Analyzing Form...</span>
+                    <span>Analyzing...</span>
                   </>
                 ) : (
                   <>
                     <Zap className="h-4 w-4 fill-black" />
-                    <span>Critique Form ({goodReps} Reps)</span>
+                    <span>Critique ({goodReps} Reps)</span>
                   </>
                 )}
               </button>
@@ -1034,45 +1096,69 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           )}
 
           {scannerMode === 'POSTURE' && (
-            <button
-              type="button"
-              disabled={isAnalyzing}
-              onClick={handleScanPosture}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#A3E635] text-black hover:bg-[#b0f340] active:scale-95 shadow-[0_0_20px_rgba(163,230,53,0.3)] transition disabled:opacity-50"
-            >
-              {isAnalyzing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Scanning Posture & Symmetry...</span>
-                </>
-              ) : (
-                <>
-                  <User className="h-4 w-4" />
-                  <span>Capture Posture & Frame Critique</span>
-                </>
-              )}
-            </button>
+            <div className="w-full flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload Posture Photo"
+                className="px-3.5 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 active:scale-95 transition whitespace-nowrap"
+              >
+                <Upload className="h-3.5 w-3.5 text-[#A3E635]" />
+                <span className="text-xs font-semibold">Upload Photo</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isAnalyzing}
+                onClick={handleScanPosture}
+                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#A3E635] text-black hover:bg-[#b0f340] active:scale-95 shadow-[0_0_20px_rgba(163,230,53,0.3)] transition disabled:opacity-50"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Scanning Posture...</span>
+                  </>
+                ) : (
+                  <>
+                    <User className="h-4 w-4" />
+                    <span>Capture Posture & Frame</span>
+                  </>
+                )}
+              </button>
+            </div>
           )}
 
           {scannerMode === 'MEAL' && (
-            <button
-              type="button"
-              disabled={isAnalyzing}
-              onClick={handleCritiqueMeal}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-amber-400 text-black hover:bg-amber-300 active:scale-95 shadow-[0_0_20px_rgba(251,191,36,0.3)] transition disabled:opacity-50"
-            >
-              {isAnalyzing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                  <span>Estimating Protein & Cleanliness...</span>
-                </>
-              ) : (
-                <>
-                  <Utensils className="h-4 w-4" />
-                  <span>Scan Meal & Lock In Protein</span>
-                </>
-              )}
-            </button>
+            <div className="w-full flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload Meal / Shake Photo"
+                className="px-3.5 py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 active:scale-95 transition whitespace-nowrap"
+              >
+                <Upload className="h-3.5 w-3.5 text-amber-400" />
+                <span className="text-xs font-semibold">Upload Food</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isAnalyzing}
+                onClick={handleCritiqueMeal}
+                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider bg-amber-400 text-black hover:bg-amber-300 active:scale-95 shadow-[0_0_20px_rgba(251,191,36,0.3)] transition disabled:opacity-50"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Estimating Macros...</span>
+                  </>
+                ) : (
+                  <>
+                    <Utensils className="h-4 w-4" />
+                    <span>Scan Meal & Lock In Protein</span>
+                  </>
+                )}
+              </button>
+            </div>
           )}
         </div>
       </div>
