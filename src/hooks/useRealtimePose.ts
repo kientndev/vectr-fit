@@ -9,6 +9,23 @@ export interface PoseLandmark {
   visibility?: number;
 }
 
+export type StanceClassification =
+  | 'NO PERSON IN FRAME'
+  | 'SITTING / AT DESK (UPPER BODY ONLY)'
+  | 'STANDING IDLE'
+  | 'OVERHEAD BAR HANG / PULL POSITION'
+  | 'HORIZONTAL PLANK / PUSH-UP STANCE'
+  | 'SQUAT / LOWER BODY STANCE';
+
+export interface BodyVisibilityStatus {
+  head: boolean;
+  arms: boolean;
+  torso: boolean;
+  hips: boolean;
+  legs: boolean;
+  areKeyJointsValid: boolean;
+}
+
 export interface JointAngleTelemetry {
   elbowAngle: number;
   leftElbowAngle: number;
@@ -20,6 +37,11 @@ export interface JointAngleTelemetry {
   rightKneeAngle: number;
   isPoseDetected: boolean;
   landmarks: PoseLandmark[] | null;
+  stance: StanceClassification;
+  stanceDetail?: string;
+  visibility: BodyVisibilityStatus;
+  isHandsOverhead: boolean;
+  isTorsoHorizontal: boolean;
 }
 
 // MediaPipe 33 Landmark Skeletal Bone Connections
@@ -179,12 +201,25 @@ export function useRealtimePose(videoRef: React.RefObject<HTMLVideoElement | nul
           rightKneeAngle: 180,
           isPoseDetected: false,
           landmarks: null,
+          stance: 'NO PERSON IN FRAME',
+          stanceDetail: 'Step into camera frame',
+          visibility: {
+            head: false,
+            arms: false,
+            torso: false,
+            hips: false,
+            legs: false,
+            areKeyJointsValid: false,
+          },
+          isHandsOverhead: false,
+          isTorsoHorizontal: false,
         };
       }
 
       const lm: PoseLandmark[] = results.landmarks[0];
 
       // Landmark indices according to MediaPipe standard:
+      // 0: Nose (Head)
       // 11: L Shoulder, 12: R Shoulder
       // 13: L Elbow,    14: R Elbow
       // 15: L Wrist,    16: R Wrist
@@ -192,12 +227,29 @@ export function useRealtimePose(videoRef: React.RefObject<HTMLVideoElement | nul
       // 25: L Knee,     26: R Knee
       // 27: L Ankle,    28: R Ankle
 
+      // Landmark visibility gates (Strict threshold 0.65)
+      const V_GATE = 0.65;
+      const getVis = (idx: number) => lm[idx]?.visibility ?? 0;
+
+      const headVis = getVis(0) > V_GATE;
+      const shouldersVis = getVis(11) > V_GATE && getVis(12) > V_GATE;
+      const elbowsVis = getVis(13) > V_GATE || getVis(14) > V_GATE;
+      const wristsVis = getVis(15) > V_GATE || getVis(16) > V_GATE;
+      const hipsVis = getVis(23) > V_GATE && getVis(24) > V_GATE;
+      const kneesVis = getVis(25) > V_GATE || getVis(26) > V_GATE;
+      const anklesVis = getVis(27) > V_GATE || getVis(28) > V_GATE;
+
+      const armsVis = shouldersVis && elbowsVis && wristsVis;
+      const torsoVis = shouldersVis && (getVis(23) > V_GATE || getVis(24) > V_GATE);
+      const legsVis = kneesVis || anklesVis;
+      const areKeyJointsValid = shouldersVis && elbowsVis && wristsVis && hipsVis;
+
       const lElbow = calculateJointAngle(lm[11], lm[13], lm[15]);
       const rElbow = calculateJointAngle(lm[12], lm[14], lm[16]);
 
       // Choose active arm by landmark visibility or max flexion
-      const lElbowVis = lm[13]?.visibility ?? 0.8;
-      const rElbowVis = lm[14]?.visibility ?? 0.8;
+      const lElbowVis = getVis(13);
+      const rElbowVis = getVis(14);
       const activeElbow = lElbowVis > rElbowVis ? lElbow : rElbow;
 
       // Shoulder angles (Hip -> Shoulder -> Elbow)
@@ -225,6 +277,54 @@ export function useRealtimePose(videoRef: React.RefObject<HTMLVideoElement | nul
       const rKnee = calculateJointAngle(lm[24], lm[26], lm[28]);
       const activeKnee = (lm[25]?.visibility ?? 0.8) > (lm[26]?.visibility ?? 0.8) ? lKnee : rKnee;
 
+      // Torso orientation & limb geometry
+      const dxTorso = Math.abs(midShoulder.x - midHip.x);
+      const dyTorso = Math.abs(midShoulder.y - midHip.y);
+      const isTorsoHorizontal = dxTorso > dyTorso * 0.75;
+      const isTorsoVertical = dyTorso > dxTorso * 1.1;
+
+      // Hands overhead test (both wrists visibly above shoulders)
+      const isHandsOverhead =
+        (lm[15]?.y ?? 1) < (lm[11]?.y ?? 0) && (lm[16]?.y ?? 1) < (lm[12]?.y ?? 0);
+
+      // Classify Real-Time Human Physical Stance
+      let stance: StanceClassification = 'STANDING IDLE';
+      let stanceDetail = 'Standing upright';
+
+      if (!shouldersVis) {
+        stance = 'NO PERSON IN FRAME';
+        stanceDetail = 'Step into camera frame';
+      } else if (!hipsVis || !kneesVis || (!legsVis && !isTorsoHorizontal)) {
+        // Upper body visible, but hips or knees are occluded / sitting close to desk
+        stance = 'SITTING / AT DESK (UPPER BODY ONLY)';
+        stanceDetail = 'Hips/legs occluded or seated at desk';
+      } else if (isTorsoHorizontal && (lm[15].y > lm[11].y || lm[16].y > lm[12].y)) {
+        // Horizontal torso with arms bearing weight below shoulders
+        stance = 'HORIZONTAL PLANK / PUSH-UP STANCE';
+        if (activeElbow < 95) {
+          stanceDetail = 'LOWERING (ECCENTRIC)';
+        } else if (activeElbow >= 150) {
+          stanceDetail = 'LOCKOUT (CONCENTRIC)';
+        } else {
+          stanceDetail = 'PLANK HOLD';
+        }
+      } else if (isTorsoVertical && isHandsOverhead) {
+        // Overhead Bar Hang / Pull
+        stance = 'OVERHEAD BAR HANG / PULL POSITION';
+        if (activeElbow < 100) {
+          stanceDetail = 'TOP PULL / SCAP LOCK';
+        } else {
+          stanceDetail = 'DEAD HANG / EXTENDED';
+        }
+      } else if (isTorsoVertical && activeKnee < 130 && hipsVis && kneesVis) {
+        // Squat stance
+        stance = 'SQUAT / LOWER BODY STANCE';
+        stanceDetail = `SQUATTING DEPTH: ${Math.round(180 - activeKnee)}°`;
+      } else if (isTorsoVertical && activeKnee >= 150 && !isHandsOverhead) {
+        stance = 'STANDING IDLE';
+        stanceDetail = 'Upright, arms at sides';
+      }
+
       return {
         elbowAngle: activeElbow,
         leftElbowAngle: lElbow,
@@ -236,6 +336,18 @@ export function useRealtimePose(videoRef: React.RefObject<HTMLVideoElement | nul
         rightKneeAngle: rKnee,
         isPoseDetected: true,
         landmarks: lm,
+        stance,
+        stanceDetail,
+        visibility: {
+          head: headVis,
+          arms: armsVis,
+          torso: torsoVis,
+          hips: hipsVis,
+          legs: legsVis,
+          areKeyJointsValid,
+        },
+        isHandsOverhead,
+        isTorsoHorizontal,
       };
     } catch (e) {
       console.warn('Frame detection notice:', e);

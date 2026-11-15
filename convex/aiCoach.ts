@@ -560,17 +560,34 @@ export const analyzeCameraFrame = action({
       try {
         let systemPrompt = '';
         if (mode === 'form') {
-          systemPrompt = `You are VECTR FIT Elite Biomechanics AI Coach.
+          systemPrompt = `You are VECTR FIT Elite Biomechanics AI Referee and Form Coach.
 Analyze the athlete performing "${exerciseName}" (${prescription}) from this captured video frame.
 ${telemetry ? `Live Sensor Joint Angles:
 - Measured Elbow Flexion: ${telemetry.elbowAngle}°
 - Measured Hip/Spine Alignment: ${telemetry.hipSpineAngle}°
 - Measured Knee Angle: ${telemetry.kneeAngle}°
 - Current Rep Count: ${telemetry.repsCompleted}` : ''}
-Evaluate kinetic chain, joint angles, lockout, ROM, and spinal alignment.
-Return STRICT JSON:
+
+CRITICAL RULES — BRUTALLY HONEST REFEREE:
+First, inspect what the person in the image is actually doing.
+If they are just sitting in a chair or at a desk, looking at the camera, lying down, standing idle, or NOT actively performing "${exerciseName}", you MUST immediately return:
 {
-  "score": 92,
+  "score": 0,
+  "detectedActivity": "Exact description of what person is doing (e.g. Person sitting at computer desk looking at camera, not exercising)",
+  "romStatus": "NOT PERFORMING EXERCISE",
+  "spineAlignment": "N/A — Athlete is seated/idle",
+  "injuryRisk": "LOW",
+  "whatLookedSolid": "None — athlete is currently idle/sitting.",
+  "microCorrection": "Step back from the camera and get into position for ${exerciseName} to receive a real form rating.",
+  "drillRecommendation": "Get into starting stance for ${exerciseName}",
+  "liveCoachTicker": "Athlete idle — get into position for ${exerciseName} to begin."
+}
+NEVER praise form if the exercise is not visibly being performed!
+
+If and ONLY IF the athlete IS visibly in active position or executing "${exerciseName}", evaluate kinetic chain, joint angles, lockout, ROM, and spinal alignment and return STRICT JSON:
+{
+  "score": 90,
+  "detectedActivity": "Concise description of active movement (e.g. Top pull-up concentric lock / Deep push-up lockout)",
   "romStatus": "95% Full Depth · Terminal Lockout Reached",
   "spineAlignment": "178° Neutral Spine · Core Bracing Active",
   "injuryRisk": "LOW",
@@ -689,6 +706,23 @@ Return STRICT JSON:
     }
 
     // Mode: FORM Exercise-Specific Rules
+    if (telemetry && telemetry.repsCompleted === 0 && telemetry.elbowAngle > 150 && telemetry.hipSpineAngle > 165) {
+      return {
+        success: true,
+        mode: 'form',
+        score: 0,
+        detectedActivity: 'Athlete stationary in front of camera, not actively performing reps',
+        romStatus: 'NOT PERFORMING EXERCISE',
+        spineAlignment: `${telemetry.hipSpineAngle}° Neutral`,
+        injuryRisk: 'LOW',
+        whatLookedSolid: 'None — athlete is currently stationary/idle.',
+        microCorrection: `Step back from camera and initiate first rep of ${exerciseName}.`,
+        drillRecommendation: `Starting Stance & Grip for ${exerciseName}`,
+        liveCoachTicker: `Get into active stance for ${exerciseName} to receive live form rating.`,
+        engine: 'biomechanical-rules',
+      };
+    }
+
     if (exLower.includes('scapular') || exLower.includes('active hang')) {
       return {
         success: true,
