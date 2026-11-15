@@ -21,6 +21,7 @@ import {
   Utensils,
   Plus,
   Upload,
+  Crown,
 } from 'lucide-react';
 
 let CapacitorCamera: any = null;
@@ -80,6 +81,10 @@ interface FormCheckCameraProps {
   onAddCorrectiveDrill?: (drill: { name: string; reps: string; cue: string }) => void;
   onMealLogged?: (protein: number) => void;
   initialMode?: ScannerMode;
+  isPro?: boolean;
+  dailyScansUsed?: number;
+  onRequirePro?: () => void;
+  onScanUsed?: () => void;
 }
 
 export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
@@ -93,6 +98,10 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
   onAddCorrectiveDrill,
   onMealLogged,
   initialMode,
+  isPro = false,
+  dailyScansUsed = 0,
+  onRequirePro,
+  onScanUsed,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -564,8 +573,20 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
     e.target.value = '';
   };
 
+  // Quota & Pro Check Guard
+  const checkCanScan = (): boolean => {
+    if (isPro) return true;
+    if (dailyScansUsed >= 1) {
+      feedback.hapticError();
+      if (onRequirePro) onRequirePro();
+      return false;
+    }
+    return true;
+  };
+
   // Reusable Mode A Runner
   const runFormAnalysis = async (imageBase64: string) => {
+    if (!checkCanScan()) return;
     feedback.hapticLight();
     setIsAnalyzing(true);
     setAnalysisResult(null);
@@ -583,6 +604,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           },
         });
         setAnalysisResult(res);
+        if (!isPro && onScanUsed) onScanUsed();
         feedback.playExerciseComplete();
         feedback.hapticSuccess();
       } else {
@@ -592,6 +614,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
             whatLookedSolid: `Strong ${exerciseRule.primaryJoint} lockout and sustained trunk stability throughout repetitions.`,
             microCorrection: `Target ${exerciseRule.minRomDepthPct}% ROM depth consistently before initiating concentric drive.`,
           });
+          if (!isPro && onScanUsed) onScanUsed();
           feedback.playExerciseComplete();
         }, 1200);
       }
@@ -601,6 +624,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
         whatLookedSolid: 'Clean concentric acceleration with locked scapular retraction.',
         microCorrection: 'Slight anterior pelvic tilt noted. Tighten lower abdomen to preserve neutral spine.',
       });
+      if (!isPro && onScanUsed) onScanUsed();
     } finally {
       setIsAnalyzing(false);
     }
@@ -608,6 +632,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
 
   // Reusable Mode B Runner
   const runPostureScan = async (imageBase64: string) => {
+    if (!checkCanScan()) return;
     feedback.hapticLight();
     setIsAnalyzing(true);
     setPostureResult(null);
@@ -619,6 +644,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           poseType: posturePoseView,
         });
         setPostureResult(res);
+        if (!isPro && onScanUsed) onScanUsed();
         feedback.playLevelUp();
         feedback.hapticSuccess();
       } else {
@@ -636,6 +662,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
               { name: 'Dead Bug with Hollow Core Press', reps: '3 sets × 10 reps/side', cue: 'Glue lumbar flat to the floor.' },
             ],
           });
+          if (!isPro && onScanUsed) onScanUsed();
           feedback.playLevelUp();
         }, 1200);
       }
@@ -648,6 +675,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
 
   // Reusable Mode C Runner
   const runMealCritique = async (imageBase64: string) => {
+    if (!checkCanScan()) return;
     feedback.hapticLight();
     setIsAnalyzing(true);
     setMealResult(null);
@@ -659,6 +687,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
         if (onMealLogged && res.proteinGrams) {
           onMealLogged(res.proteinGrams);
         }
+        if (!isPro && onScanUsed) onScanUsed();
         feedback.playExerciseComplete();
         feedback.hapticSuccess();
       } else {
@@ -673,6 +702,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
             critique: 'Optimal leucine trigger (>3g) achieved with complete amino acid profile. Clean complex carbohydrate partitioning.',
           });
           if (onMealLogged) onMealLogged(46);
+          if (!isPro && onScanUsed) onScanUsed();
           feedback.playExerciseComplete();
         }, 1200);
       }
@@ -759,6 +789,35 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
               <X className="h-4 w-4" />
             </button>
           </div>
+        </div>
+
+        {/* Quota / Pro Status Pill Banner */}
+        <div className="bg-[#0D0D10] border-b border-white/[0.06] px-4 py-2 flex items-center justify-between z-20">
+          {isPro ? (
+            <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#A3E635]">
+              <Crown className="h-3.5 w-3.5 fill-current" />
+              <span>👑 VECTR PRO // UNLIMITED SCANS</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between w-full">
+              <span className={`text-[11px] font-mono font-bold ${
+                dailyScansUsed >= 1 ? 'text-amber-400' : 'text-zinc-300'
+              }`}>
+                FREE TIER: {Math.max(0, 1 - dailyScansUsed)}/1 DAILY AI SCAN REMAINING
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  feedback.hapticLight();
+                  if (onRequirePro) onRequirePro();
+                }}
+                className="flex items-center gap-1 text-[10px] font-bold text-[#A3E635] hover:underline bg-[#A3E635]/10 px-2 py-0.5 rounded border border-[#A3E635]/20"
+              >
+                <span>Upgrade Pro</span>
+                <Crown className="h-2.5 w-2.5 fill-current" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Viewport Feed */}

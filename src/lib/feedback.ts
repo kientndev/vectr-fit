@@ -40,6 +40,10 @@ class FeedbackEngine {
     this.triggerHaptic([30, 40, 50]);
   }
 
+  hapticError() {
+    this.triggerHaptic([60, 40, 60]);
+  }
+
   // Set Complete: Crisp futuristic rising chirp + 35ms haptic
   playSetComplete() {
     this.triggerHaptic(35);
@@ -148,6 +152,10 @@ class FeedbackEngine {
         osc.stop(now + idx * 0.08 + 0.28);
       });
     } catch {}
+  }
+
+  playDailyCleared() {
+    this.playLevelUp();
   }
 }
 

@@ -20,7 +20,7 @@ import { CalibrationPanel } from '../components/CalibrationPanel';
 import { DailyBlueprint } from '../components/DailyBlueprint';
 import { MuscleRecoveryPanel } from '../components/MuscleRecoveryPanel';
 import { RestTimer, RestTimerState } from '../components/RestTimer';
-import { ProUpgradeModal } from '../components/ProUpgradeModal';
+import { ProPaywallModal } from '../components/ProPaywallModal';
 import { ProHistoryStrip } from '../components/ProHistoryStrip';
 import { BottomNav, MobileTab } from '../components/BottomNav';
 import { OnboardingFlow, OnboardingData } from '../components/OnboardingFlow';
@@ -84,6 +84,7 @@ export default function Home() {
   const [isCameraOpen, setIsCameraOpen] = useState<boolean>(false);
   const [cameraExerciseName, setCameraExerciseName] = useState<string>('Standard Push-up');
   const [cameraScannerMode, setCameraScannerMode] = useState<ScannerMode>('FORM');
+  const [dailyScansUsed, setDailyScansUsed] = useState<number>(0);
 
   // Critique AI & Leaderboard Modals
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
@@ -215,6 +216,16 @@ export default function Home() {
       if (!hasOnboarded) {
         setIsOnboardingOpen(true);
       }
+
+      // Check daily free scan quota for today
+      try {
+        const storedScans = localStorage.getItem(`vectr_scans_${todayDate}`);
+        if (storedScans) {
+          setDailyScansUsed(parseInt(storedScans, 10) || 0);
+        }
+      } catch {
+        // Safe localStorage fallback
+      }
     }
   }, []);
 
@@ -339,6 +350,19 @@ export default function Home() {
     setCameraExerciseName(label);
     setCameraScannerMode('MEAL');
     setIsCameraOpen(true);
+  };
+
+  // Handler: Increment daily used scan count for Free tier
+  const handleScanUsed = () => {
+    setDailyScansUsed(prev => {
+      const next = prev + 1;
+      try {
+        localStorage.setItem(`vectr_scans_${todayDate}`, next.toString());
+      } catch {
+        // Safe localStorage fallback
+      }
+      return next;
+    });
   };
 
   // Handler: Send captured frame & telemetry to Convex / Gemini Vision
@@ -1103,6 +1127,7 @@ export default function Home() {
               completedSets={completedSets}
               soreJoints={calibration.soreJoints}
               energy={calibration.energy}
+              onAwardXp={awardXp}
             />
 
             <ProHistoryStrip
@@ -1132,12 +1157,13 @@ export default function Home() {
         pendingSetsCount={pendingSets}
       />
 
-      {/* Pro SaaS Upgrade Modal */}
-      <ProUpgradeModal
+      {/* VECTR PRO Monetization Paywall Modal */}
+      <ProPaywallModal
         isOpen={isProModalOpen}
         onClose={() => setIsProModalOpen(false)}
         isPro={isPro}
         onTogglePro={proState => setIsPro(proState)}
+        dailyScansRemaining={Math.max(0, 1 - dailyScansUsed)}
       />
 
       {/* 5-Step AI Athlete Onboarding Wizard */}
@@ -1154,6 +1180,10 @@ export default function Home() {
         exerciseName={cameraExerciseName}
         coachPersona={calibration.persona}
         initialMode={cameraScannerMode}
+        isPro={isPro}
+        dailyScansUsed={dailyScansUsed}
+        onRequirePro={() => setIsProModalOpen(true)}
+        onScanUsed={handleScanUsed}
         onAnalyze={handleAnalyzeFormSnapshot}
         onCritiquePosture={handleCritiquePostureSnapshot}
         onCritiqueMeal={handleCritiqueMealSnapshot}
@@ -1168,6 +1198,11 @@ export default function Home() {
         athletes={leaderboardData || []}
         currentUserId={effectiveUserId}
         currentUserXp={userXp}
+        currentUserTier={protocol.tier}
+        athleteCallsign={clerkUser?.fullName || clerkUser?.username || 'ATHLETE-VECTR-01'}
+        verifiedSetsCount={completedSetsCount}
+        streakCount={streakCount}
+        isPro={isPro}
       />
 
       {/* Viral 9:16 Athlete Critique Rating Card Modal */}

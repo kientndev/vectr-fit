@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Lock,
   X,
+  Crown,
 } from 'lucide-react';
 
 interface DailyBlueprintProps {
@@ -426,6 +427,48 @@ ${protocol.blocks
           ))}
         </div>
       </section>
+
+      {/* ========================================================= */}
+      {/* 4. VECTR PRO MEMBERSHIP CARD (HIGH-CONVERTING ENTRY)      */}
+      {/* ========================================================= */}
+      <div
+        onClick={onOpenProModal}
+        className="cursor-pointer rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#121215] via-[#161914] to-[#121215] p-4 transition-all hover:border-[#A3E635]/40 active:scale-[0.99] group shadow-lg flex items-center justify-between"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#A3E635]/15 border border-[#A3E635]/30 text-[#A3E635] group-hover:scale-105 transition shrink-0">
+            <Crown className="h-5 w-5 fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold tracking-wider text-[#A3E635] uppercase">
+                VECTR PRO MEMBERSHIP
+              </span>
+              <span className="rounded bg-[#A3E635]/20 px-1.5 py-0.2 text-[9px] font-bold text-[#A3E635]">
+                SAVE 52%
+              </span>
+            </div>
+            <h4 className="text-sm font-bold text-white tracking-tight">
+              Unlock Unlimited 3-in-1 AI Vision & Bio-Ratings
+            </h4>
+            <p className="text-[11px] text-zinc-400">
+              Form Check, Posture Scan & Meal Macros without daily caps.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={e => {
+            e.stopPropagation();
+            onOpenProModal();
+          }}
+          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#A3E635] text-black font-bold text-xs hover:bg-[#bbf055] transition shrink-0 ml-3"
+        >
+          <span>Upgrade</span>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
       {/* ========================================================= */}
       {/* 5. ANTI-CHEAT ACTIVE SET EXECUTION PLAYER MODAL          */}
