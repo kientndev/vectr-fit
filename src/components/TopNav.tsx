@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Flame, Crown, RotateCw, User, Cloud, CloudOff } from 'lucide-react';
+import { Flame, Crown, RotateCw, User, Cloud, CloudOff, Trophy } from 'lucide-react';
 import { DifficultyTier, Modality } from '../types/protocol';
 import { TIER_CONFIG } from '../lib/protocolEngine';
 import { UserButton, SignInButton, useUser } from '@clerk/clerk-react';
@@ -14,6 +14,7 @@ interface TopNavProps {
   onOpenProModal: () => void;
   isPro: boolean;
   onAdvanceDay: () => void;
+  onOpenLeaderboard?: () => void;
   activeView?: 'today' | 'recovery' | 'history';
   onViewChange?: (view: 'today' | 'recovery' | 'history') => void;
   isCloudConnected?: boolean;
@@ -27,6 +28,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   onOpenProModal,
   isPro,
   onAdvanceDay,
+  onOpenLeaderboard,
   activeView = 'today',
   onViewChange,
   isCloudConnected = false,
@@ -119,6 +121,18 @@ export const TopNav: React.FC<TopNavProps> = ({
 
         {/* Right Side: Streak, Pro Pill, and Clerk Auth */}
         <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Trophy Leaderboard Pill */}
+          {onOpenLeaderboard && (
+            <button
+              onClick={onOpenLeaderboard}
+              title="Global Athlete Leaderboard"
+              className="flex items-center gap-1.5 rounded-lg border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold text-amber-400 hover:bg-amber-400/20 transition active:scale-95"
+            >
+              <Trophy className="h-3.5 w-3.5 fill-amber-400/30" />
+              <span className="hidden xs:inline">Ranks</span>
+            </button>
+          )}
+
           {/* Active Discipline Streak Pill */}
           <button
             onClick={onIncrementStreak}

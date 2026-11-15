@@ -25,8 +25,10 @@ import { ProHistoryStrip } from '../components/ProHistoryStrip';
 import { BottomNav, MobileTab } from '../components/BottomNav';
 import { OnboardingFlow, OnboardingData } from '../components/OnboardingFlow';
 import { FormCheckCamera } from '../components/FormCheckCamera';
+import { CritiqueStatCard } from '../components/CritiqueStatCard';
+import { LeaderboardModal, LeaderboardAthlete } from '../components/LeaderboardModal';
 import { feedback } from '../lib/feedback';
-import { Check, Plus, Droplet, Sparkles, Zap, Shield, Heart } from 'lucide-react';
+import { Check, Plus, Droplet, Sparkles, Zap, Shield, Heart, Sun, Dumbbell, Moon, Trophy } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { useQuery, useMutation, useAction } from 'convex/react';
 import { api } from '../../convex/_generated/api';
@@ -84,6 +86,9 @@ export default function Home() {
   const [isCameraOpen, setIsCameraOpen] = useState<boolean>(false);
   const [cameraExerciseName, setCameraExerciseName] = useState<string>('Standard Push-up');
 
+  // Critique AI & Leaderboard Modals
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isCommandLoading, setIsCommandLoading] = useState(false);
@@ -133,6 +138,18 @@ export default function Home() {
   let completeOnboardingMutation: any = null;
   let generateOrAdjustAction: any = null;
   let analyzeExerciseFormAction: any = null;
+  let critiquePostureAction: any = null;
+  let critiqueMealAction: any = null;
+  let leaderboardData: any = null;
+
+  try {
+    leaderboardData = useQuery(
+      api.protocols.getLeaderboard,
+      effectiveUserId ? { userId: effectiveUserId, userXp, userTier: calibration.tier } : 'skip'
+    );
+  } catch {
+    leaderboardData = null;
+  }
 
   try {
     toggleSetOrTaskMutation = useMutation(api.protocols.toggleSetOrTask);
@@ -141,6 +158,8 @@ export default function Home() {
     completeOnboardingMutation = useMutation(api.protocols.completeOnboarding);
     generateOrAdjustAction = useAction(api.aiCoach.generateOrAdjustProtocol);
     analyzeExerciseFormAction = useAction(api.aiCoach.analyzeExerciseForm);
+    critiquePostureAction = useAction(api.aiCoach.critiquePostureAndPhysique);
+    critiqueMealAction = useAction(api.aiCoach.critiqueMealMacros);
   } catch {
     // Graceful fallback for offline mode
   }
@@ -362,6 +381,109 @@ export default function Home() {
       whatLookedSolid: 'Rigid kinetic tension maintained through scapular depression and hip lockout.',
       microCorrection: 'Slow the eccentric descent by ~0.5s to maximize active tendon strain.',
     };
+  };
+
+  // Handler: Critique Posture & Physique (Mode B)
+  const handleCritiquePostureSnapshot = async (payload: {
+    imageBase64: string;
+    poseType: string;
+  }) => {
+    if (critiquePostureAction) {
+      try {
+        const res = await critiquePostureAction({
+          userId: effectiveUserId,
+          imageBase64: payload.imageBase64,
+          poseType: payload.poseType,
+          persona: calibration.persona,
+        });
+        awardXp(120, '🧍 POSTURE CRITIQUE COMPLETE');
+        return res;
+      } catch (e) {
+        console.warn('Convex posture action error:', e);
+      }
+    }
+    awardXp(120, '🧍 POSTURE CRITIQUE COMPLETE');
+    return {
+      overallScore: 88,
+      potentialScore: 96,
+      spinalPosture: 86,
+      shoulderSymmetry: 90,
+      coreAlignment: 85,
+      athleticFrame: 89,
+      primaryCritique: 'Slight rounded shoulder posture with forward head bias. Lower pelvic alignment is balanced.',
+      correctiveDrills: [
+        { name: 'Prone Scapular Y-T-W Raises', reps: '2 sets × 12 reps', cue: 'Depress traps; tuck chin.' },
+        { name: 'Dead Bug with Hollow Core Press', reps: '3 sets × 10 reps/side', cue: 'Glue lumbar flat to the floor.' },
+      ],
+    };
+  };
+
+  // Handler: Critique Meal & Macros (Mode C)
+  const handleCritiqueMealSnapshot = async (payload: {
+    imageBase64: string;
+  }) => {
+    if (critiqueMealAction) {
+      try {
+        const res = await critiqueMealAction({
+          userId: effectiveUserId,
+          imageBase64: payload.imageBase64,
+        });
+        awardXp(100, '🥩 MEAL SCANNED & LOGGED');
+        return res;
+      } catch (e) {
+        console.warn('Convex meal action error:', e);
+      }
+    }
+    awardXp(100, '🥩 MEAL SCANNED & LOGGED');
+    return {
+      mealName: 'Grilled Chicken, Jasmine Rice & Steamed Greens',
+      proteinGrams: 46,
+      calories: 560,
+      carbsGrams: 52,
+      fatsGrams: 14,
+      cleanScore: 94,
+      critique: 'Optimal leucine trigger (>3g) achieved with complete amino acid profile. Clean complex carbohydrate partitioning.',
+    };
+  };
+
+  // 1-Tap Add Corrective Drill to Today's Workout
+  const handleAddCorrectiveDrill = (drill: { name: string; reps: string; cue: string }) => {
+    const newExercise: Exercise = {
+      id: `drill_${Date.now()}`,
+      name: drill.name,
+      targetMuscle: 'Corrective & Kinetic Posture',
+      sets: 2,
+      repsOrHold: drill.reps,
+      restSeconds: 45,
+      rpe: 'RPE 6.5',
+      formCue: drill.cue,
+      isAdapted: true,
+      protectionTag: 'Posture Drill',
+      category: 'FINISHER',
+    };
+
+    setProtocol(prev => {
+      const nextBlocks = [...prev.blocks];
+      if (nextBlocks.length > 0) {
+        nextBlocks[nextBlocks.length - 1] = {
+          ...nextBlocks[nextBlocks.length - 1],
+          exercises: [...nextBlocks[nextBlocks.length - 1].exercises, newExercise],
+        };
+      }
+      return { ...prev, blocks: nextBlocks };
+    });
+
+    awardXp(50, '⚡ CORRECTIVE DRILL ADDED');
+    feedback.playSetComplete();
+  };
+
+  // Auto-complete fuel target when meal is logged
+  const handleMealLogged = (protein: number) => {
+    setCompletedFuel(prev => ({
+      ...prev,
+      fuel_1: true,
+    }));
+    awardXp(50, `🍗 ${protein}g PROTEIN LOCKED`);
   };
 
   // Countdown effect for restTimer
@@ -821,6 +943,7 @@ export default function Home() {
         onOpenProModal={() => setIsProModalOpen(true)}
         isPro={isPro}
         onAdvanceDay={handleAdvanceDay}
+        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         activeView={activeTab === 'workout' ? 'today' : activeTab === 'recovery' ? 'recovery' : 'history'}
         onViewChange={v => {
           if (v === 'today') setActiveTab('workout');
@@ -831,7 +954,14 @@ export default function Home() {
       />
 
       {/* Main SaaS Workspace Container with Safe-Area bottom padding */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-5 sm:px-6 pb-28">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-5 sm:px-6 pb-28 space-y-5">
+        {/* Critique AI Character Stat Card (LVL 1 to 10 progression) */}
+        <CritiqueStatCard
+          currentXp={userXp}
+          streakCount={streakCount}
+          onOpenScanner={() => handleOpenFormCamera('Standard Push-up')}
+        />
+
         {/* ========================================================= */}
         {/* TAB 1: WORKOUT (DO Session + Spotlight + Live Controller) */}
         {/* ========================================================= */}
@@ -898,10 +1028,10 @@ export default function Home() {
             <div className="pb-1 flex items-center justify-between">
               <div>
                 <h2 className="text-base font-bold text-white tracking-tight">
-                  Nutrition Targets & Guardrails
+                  Time-Slotted Protocols & Discipline
                 </h2>
                 <p className="text-xs text-zinc-400">
-                  Earn +50 XP per locked target. Maintain your daily discipline score.
+                  Earn +50 XP per locked target. Scientific timing for peak hormonal & kinetic output.
                 </p>
               </div>
               <div className="text-right">
@@ -912,22 +1042,62 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Quick 60s Lock-In Challenge Card */}
+            <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/[0.08] to-amber-500/[0.02] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-black font-extrabold text-sm shadow-[0_0_15px_rgba(251,191,36,0.4)]">
+                  ⚡
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
+                      Daily Dopamine Drill
+                    </span>
+                    <span className="rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.2">
+                      +150 BONUS XP
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-white mt-0.5">
+                    🔥 60s Camera Lock-In Challenge: 15 Strict Form Push-ups
+                  </h4>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleOpenFormCamera('Standard Push-up')}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-400 text-black font-bold text-xs hover:bg-amber-300 active:scale-95 transition shadow-sm"
+              >
+                Launch Challenge
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* PILLAR 02 // NEED (Fuel & Hydration) */}
+              {/* PILLAR 02 // TIME-SLOTTED RECOVERY TARGETS */}
               <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3.5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                  <h3 className="text-xs font-bold text-white tracking-tight uppercase">
-                    Fuel & Recovery Targets
-                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <Sun className="h-4 w-4 text-amber-400" />
+                    <h3 className="text-xs font-bold text-white tracking-tight uppercase">
+                      Time-Slotted Fuel Targets
+                    </h3>
+                  </div>
                   <span className="text-[11px] font-mono-numbers text-[#A3E635]">
                     {completedFuelCount}/{totalFuelCount} Locked
                   </span>
                 </div>
 
                 <div className="space-y-3">
-                  {protocol.fuelTargets.map(target => {
+                  {protocol.fuelTargets.map((target, idx) => {
                     const isDone = !!completedFuel[target.id];
                     const isWaterTarget = target.id === 'fuel_2';
+                    const timeSlot = idx === 0 ? 'Training Window' : idx === 1 ? 'Morning Lock-In' : 'Evening Recovery';
+                    const whyItMatters =
+                      idx === 0
+                        ? 'Triggers mTOR muscle protein synthesis and supplies essential BCAAs.'
+                        : idx === 1
+                        ? 'Maintains cell volumization, neural conductivity, and prevents cramping.'
+                        : 'Activates parasympathetic nervous system for GH release during REM sleep.';
 
                     return (
                       <div
@@ -939,8 +1109,8 @@ export default function Home() {
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-zinc-200">
-                            {target.label}
+                          <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono font-semibold text-zinc-300">
+                            {timeSlot}
                           </span>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             isDone ? 'bg-[#A3E635]/20 text-[#A3E635]' : 'bg-white/[0.06] text-zinc-400'
@@ -950,18 +1120,24 @@ export default function Home() {
                         </div>
 
                         {/* Value Display */}
-                        <div className="my-2 flex items-baseline gap-2">
-                          <span className={`font-mono-numbers text-2xl font-black ${
+                        <div className="my-2 flex items-baseline justify-between">
+                          <span className="text-xs font-semibold text-zinc-200">
+                            {target.label}
+                          </span>
+                          <span className={`font-mono-numbers text-xl font-black ${
                             isDone ? 'text-[#A3E635]' : 'text-white'
                           }`}>
                             {isWaterTarget ? `${waterAmount}L` : target.value}
                           </span>
-                          <span className="text-xs text-zinc-400">
-                            {target.detail}
-                          </span>
                         </div>
 
-                        {/* Interactive Water Increments for Hydration card */}
+                        {/* Scientific Why It Matters Badge */}
+                        <div className="p-2 rounded-lg bg-black/40 border border-white/[0.04] mb-3 text-[11px] text-zinc-400 leading-snug">
+                          <span className="text-[#A3E635] font-semibold">Why it matters: </span>
+                          {whyItMatters}
+                        </div>
+
+                        {/* Interactive Water Increments */}
                         {isWaterTarget && (
                           <div className="mb-3 flex items-center gap-2">
                             <button
@@ -1015,17 +1191,27 @@ export default function Home() {
               {/* PILLAR 03 // AVOID (Discipline Guardrails) */}
               <div className="rounded-xl border border-white/[0.07] bg-[#121215] p-4 space-y-3.5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
-                  <h3 className="text-xs font-bold text-white tracking-tight uppercase">
-                    Discipline Guardrails
-                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <Moon className="h-4 w-4 text-emerald-400" />
+                    <h3 className="text-xs font-bold text-white tracking-tight uppercase">
+                      Time-Slotted Discipline Guardrails
+                    </h3>
+                  </div>
                   <span className="text-[11px] font-mono-numbers text-emerald-400">
                     {completedAvoidCount}/{totalAvoidCount} Maintained
                   </span>
                 </div>
 
                 <div className="space-y-3">
-                  {protocol.avoidRules.map(rule => {
+                  {protocol.avoidRules.map((rule, idx) => {
                     const isDone = !!completedAvoid[rule.id];
+                    const timeSlot = idx === 0 ? 'All Day Window' : idx === 1 ? 'During Workout' : 'Evening Sleep Window';
+                    const whyAvoidMatters =
+                      idx === 0
+                        ? 'Liquid fructose bypasses liver glycogen saturation and elevates visceral fat storage.'
+                        : idx === 1
+                        ? 'Training past true technical failure fries central motor unit firing and risks rotator cuff strain.'
+                        : 'Blue light spectrum inhibits pineal melatonin release by up to 58%, reducing deep stage 3 recovery.';
 
                     return (
                       <div
@@ -1037,8 +1223,8 @@ export default function Home() {
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-zinc-200">
-                            {rule.title}
+                          <span className="rounded bg-white/[0.06] px-2 py-0.5 text-[10px] font-mono font-semibold text-zinc-300">
+                            {timeSlot}
                           </span>
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/15 text-red-300'
@@ -1047,9 +1233,20 @@ export default function Home() {
                           </span>
                         </div>
 
-                        <p className="my-2 text-xs text-zinc-400 leading-relaxed">
-                          {rule.description}
-                        </p>
+                        <div className="my-2">
+                          <span className="text-xs font-semibold text-zinc-200">
+                            {rule.title}
+                          </span>
+                          <p className="text-xs text-zinc-400 mt-0.5">
+                            {rule.description}
+                          </p>
+                        </div>
+
+                        {/* Scientific Why It Matters Badge */}
+                        <div className="p-2 rounded-lg bg-black/40 border border-white/[0.04] mb-3 text-[11px] text-zinc-400 leading-snug">
+                          <span className="text-emerald-400 font-semibold">Why it matters: </span>
+                          {whyAvoidMatters}
+                        </div>
 
                         {/* Full-Width High-Affordance Guardrail Button */}
                         <button
@@ -1145,13 +1342,26 @@ export default function Home() {
         onClose={() => setIsOnboardingOpen(false)}
       />
 
-      {/* Live AI Form-Check Camera Modal */}
+      {/* Live AI Form-Check & Critique 3-in-1 Camera Hub */}
       <FormCheckCamera
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         exerciseName={cameraExerciseName}
         coachPersona={calibration.persona}
         onAnalyze={handleAnalyzeFormSnapshot}
+        onCritiquePosture={handleCritiquePostureSnapshot}
+        onCritiqueMeal={handleCritiqueMealSnapshot}
+        onAddCorrectiveDrill={handleAddCorrectiveDrill}
+        onMealLogged={handleMealLogged}
+      />
+
+      {/* Global & Tier Division Leaderboard Modal */}
+      <LeaderboardModal
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        athletes={leaderboardData || []}
+        currentUserId={effectiveUserId}
+        currentUserXp={userXp}
       />
     </div>
   );

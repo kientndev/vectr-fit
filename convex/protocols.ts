@@ -328,4 +328,81 @@ export const completeOnboarding = mutation({
   },
 });
 
+/**
+ * getLeaderboard: Returns ranked global and tier athletes with realistic seeded competitors
+ */
+export const getLeaderboard = query({
+  args: {
+    userId: v.string(),
+    userXp: v.optional(v.number()),
+    userTier: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const profiles = await ctx.db.query('athleteProfiles').take(25);
+
+    // Realistic seeded competitive roster across Tiers 1 to 5
+    const SEEDED_ATHLETES = [
+      { id: 'rival_1', name: 'KAI // APEX', tier: 5, streak: 42, xp: 9450, modality: 'BODYWEIGHT', score: 98, isRival: true },
+      { id: 'rival_2', name: 'VALKYRIE-9', tier: 5, streak: 38, xp: 8720, modality: 'GYM', score: 96, isRival: true },
+      { id: 'rival_3', name: 'MARCUS // ZERO', tier: 4, streak: 27, xp: 6850, modality: 'BODYWEIGHT', score: 93, isRival: true },
+      { id: 'rival_4', name: 'TITAN_DRAKE', tier: 4, streak: 21, xp: 5900, modality: 'GYM', score: 91, isRival: true },
+      { id: 'rival_5', name: 'SHADOW_CALI', tier: 3, streak: 16, xp: 4420, modality: 'BODYWEIGHT', score: 88, isRival: true },
+      { id: 'rival_6', name: 'ATLAS // HYBRID', tier: 3, streak: 14, xp: 3950, modality: 'GYM', score: 86, isRival: true },
+      { id: 'rival_7', name: 'NEXUS_FIT', tier: 2, streak: 9, xp: 2600, modality: 'BODYWEIGHT', score: 82, isRival: true },
+      { id: 'rival_8', name: 'RONIN_IRON', tier: 2, streak: 7, xp: 2100, modality: 'GYM', score: 80, isRival: true },
+      { id: 'rival_9', name: 'GHOST_RUNNER', tier: 1, streak: 4, xp: 1250, modality: 'BODYWEIGHT', score: 75, isRival: true },
+      { id: 'rival_10', name: 'RECRUIT_V', tier: 1, streak: 2, xp: 750, modality: 'GYM', score: 72, isRival: true },
+    ];
+
+    // Map real profiles
+    const realAthletes: Array<{
+      id: string;
+      name: string;
+      tier: number;
+      streak: number;
+      xp: number;
+      modality: string;
+      score: number;
+      isCurrentUser: boolean;
+      isRival?: boolean;
+    }> = profiles.map(p => ({
+      id: p._id.toString(),
+      name: p.athleteName || (p.userId === args.userId ? 'YOU (ATHLETE)' : `ATHLETE_${p.userId.substring(0, 5).toUpperCase()}`),
+      tier: p.tier,
+      streak: p.streakCount,
+      xp: p.xp || (p.streakCount * 300) + 400,
+      modality: p.modality.toUpperCase(),
+      score: p.critiqueScores?.overall || 88,
+      isCurrentUser: p.userId === args.userId,
+    }));
+
+    // If current user is not in profiles yet, inject them with current local session values
+    const hasCurrentUser = realAthletes.some(a => a.isCurrentUser);
+    if (!hasCurrentUser && args.userId) {
+      realAthletes.push({
+        id: 'current_user_local',
+        name: 'YOU (ATHLETE)',
+        tier: args.userTier || 3,
+        streak: 3,
+        xp: args.userXp || 1450,
+        modality: 'BODYWEIGHT',
+        score: 90,
+        isCurrentUser: true,
+      });
+    }
+
+    // Merge and sort by XP descending
+    const merged = [...realAthletes, ...SEEDED_ATHLETES].sort((a, b) => b.xp - a.xp);
+
+    // Compute ranks
+    const ranked = merged.map((athlete, index) => ({
+      ...athlete,
+      rank: index + 1,
+    }));
+
+    return ranked;
+  },
+});
+
+
 

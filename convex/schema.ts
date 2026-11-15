@@ -10,10 +10,21 @@ export default defineSchema({
     objective: v.string(),
     coachPersona: v.string(), // "TACTICAL_SCIENTIST" | "DRILL_SERGEANT"
     streakCount: v.number(),
+    xp: v.optional(v.number()),
+    athleteName: v.optional(v.string()),
     lastCompletedDate: v.optional(v.string()),
     isPro: v.boolean(),
     muscleReadiness: v.any(), // 6-zone readiness percentages
     onboardingCompleted: v.optional(v.boolean()),
+    critiqueScores: v.optional(
+      v.object({
+        overall: v.number(),
+        strength: v.number(),
+        discipline: v.number(),
+        form: v.number(),
+        recovery: v.number(),
+      })
+    ),
     biometrics: v.optional(
       v.object({
         weightKg: v.number(),
