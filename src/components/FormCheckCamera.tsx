@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { feedback } from '../lib/feedback';
 import { getExerciseRule, ExerciseFormRule } from '../lib/movementRules';
+import { useRealtimePose, POSE_CONNECTIONS } from '../hooks/useRealtimePose';
 import {
   Camera as CameraIcon,
   RotateCcw,
@@ -22,6 +23,9 @@ import {
   Plus,
   Upload,
   Crown,
+  Volume2,
+  VolumeX,
+  Radio,
 } from 'lucide-react';
 
 let CapacitorCamera: any = null;
@@ -132,6 +136,68 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean>(false);
+
+  // MediaPipe Pose Tracking Hook
+  const { isModelLoading: isPoseModelLoading, modelError: poseModelError, detectPose } = useRealtimePose(videoRef);
+
+  // Live Auto-Triggered AI Vision Stream State
+  const [isLiveStreamActive, setIsLiveStreamActive] = useState<boolean>(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState<boolean>(true);
+  const [liveCoachTickerText, setLiveCoachTickerText] = useState<string | null>(null);
+  const lastAutoStreamRepRef = useRef<number>(0);
+  const lastAutoStreamTimeRef = useRef<number>(0);
+  const [kneeAngle, setKneeAngle] = useState<number>(180);
+
+  // Web Speech API Voice Directive Caller
+  const speakCoachDirective = (text: string) => {
+    if (!isVoiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.0;
+      const voices = window.speechSynthesis.getVoices();
+      const engVoice = voices.find(v => v.lang.startsWith('en'));
+      if (engVoice) utterance.voice = engVoice;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis notice:', e);
+    }
+  };
+
+  // Auto-streaming trigger helper
+  const triggerLiveAiVisionStream = async (angles: {
+    elbow: number;
+    hipSpine: number;
+    knee: number;
+    reps: number;
+  }) => {
+    if (!onAnalyzeCameraFrame || isAnalyzing) return;
+    try {
+      const frame = captureCurrentFrame();
+      if (!frame) return;
+
+      lastAutoStreamTimeRef.current = Date.now();
+      lastAutoStreamRepRef.current = angles.reps;
+
+      const res = await onAnalyzeCameraFrame({
+        imageBase64: frame,
+        mode: 'form',
+        exerciseName,
+        prescription,
+      });
+
+      if (res) {
+        const ticker =
+          res.liveCoachTicker ||
+          `Form ${res.score ?? res.formScore ?? 92}/100: ${res.microCorrection || res.whatLookedSolid}`;
+        setLiveCoachTickerText(ticker);
+        speakCoachDirective(ticker);
+      }
+    } catch (e) {
+      console.warn('Non-blocking AI stream error:', e);
+    }
+  };
 
   // Dynamic Movement Rule (Mode A)
   const exerciseRule: ExerciseFormRule = getExerciseRule(exerciseName);
@@ -407,63 +473,175 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
-      // 2. Kinematic Joint Angles Simulation
-      const t = Date.now() / 800;
-      const motionAmplifier = isAthleteMoving ? Math.min(1.5, Math.max(0.4, motionEnergy * 8)) : 0.05;
+      // 2. Query MediaPipe Pose Landmark Telemetry
+      const poseData = detectPose();
 
-      const computedDepth = Math.min(
-        100,
-        Math.max(
-          10,
-          Math.round((centerOfMassY / height) * 85 + Math.sin(t * 1.8) * 25 * motionAmplifier)
-        )
-      );
+      const exLower = exerciseName.toLowerCase();
+      const isLegExercise =
+        exLower.includes('squat') ||
+        exLower.includes('lunge') ||
+        exLower.includes('pistol') ||
+        exLower.includes('deadlift');
 
-      const currentJointAngle = Math.round(175 - (computedDepth / 100) * 105);
-      const computedSpineDev = Math.round(Math.sin(t * 1.2) * 12 + (motionEnergy > 0.4 ? 14 : 4));
-      const currentSpineAngle = 180 - computedSpineDev;
+      let currentJointAngle = 175;
+      let currentSpineAngle = 178;
+      let computedDepth = 0;
+      let currentKneeAngle = 180;
+      let isFormBroken = false;
+
+      if (poseData && poseData.isPoseDetected && poseData.landmarks) {
+        const lm = poseData.landmarks;
+
+        currentJointAngle = poseData.elbowAngle;
+        currentSpineAngle = poseData.hipSpineAngle;
+        currentKneeAngle = poseData.kneeAngle;
+        setKneeAngle(currentKneeAngle);
+
+        if (isLegExercise) {
+          computedDepth = Math.max(0, Math.min(100, Math.round(((175 - currentKneeAngle) / 85) * 100)));
+        } else {
+          computedDepth = Math.max(0, Math.min(100, Math.round(((175 - currentJointAngle) / 90) * 100)));
+        }
+
+        // Live Exercise-Specific Rule Checks (e.g. Hip sag < 155°)
+        if (currentSpineAngle < 155 && !isLegExercise) {
+          isFormBroken = true;
+          setLiveFeedbackCue('⚠️ HIP SAG DETECTED (CORE UNBRACED)');
+        }
+
+        // 3. Render Real MediaPipe 33-Landmark Skeleton Overlay at 60 FPS
+        const primaryColor = isFormBroken ? '#EF4444' : '#A3E635';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Draw bone lines
+        POSE_CONNECTIONS.forEach(([startIdx, endIdx]) => {
+          const p1 = lm[startIdx];
+          const p2 = lm[endIdx];
+          if (!p1 || !p2) return;
+          if ((p1.visibility && p1.visibility < 0.4) || (p2.visibility && p2.visibility < 0.4)) return;
+
+          const isSpineLine =
+            (startIdx === 11 && endIdx === 23) ||
+            (startIdx === 12 && endIdx === 24) ||
+            (startIdx === 23 && endIdx === 24);
+
+          ctx.strokeStyle = isSpineLine && isFormBroken ? '#EF4444' : primaryColor;
+          ctx.lineWidth = 3.5;
+
+          ctx.beginPath();
+          ctx.moveTo(p1.x * width, p1.y * height);
+          ctx.lineTo(p2.x * width, p2.y * height);
+          ctx.stroke();
+        });
+
+        // Draw 33 Key Joint Nodes
+        lm.forEach((pt, idx) => {
+          if (!pt || (pt.visibility && pt.visibility < 0.35)) return;
+          const px = pt.x * width;
+          const py = pt.y * height;
+
+          ctx.fillStyle = isFormBroken && (idx === 23 || idx === 24) ? '#EF4444' : '#A3E635';
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = isFormBroken ? 'rgba(239, 68, 68, 0.25)' : 'rgba(163, 230, 53, 0.25)';
+          ctx.beginPath();
+          ctx.arc(px, py, 8, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else {
+        // Fallback: Dynamic kinetic skeleton from optical energy
+        const t = Date.now() / 800;
+        const motionAmplifier = isAthleteMoving ? Math.min(1.5, Math.max(0.4, motionEnergy * 8)) : 0.05;
+
+        computedDepth = Math.min(
+          100,
+          Math.max(
+            10,
+            Math.round((centerOfMassY / height) * 85 + Math.sin(t * 1.8) * 25 * motionAmplifier)
+          )
+        );
+
+        currentJointAngle = Math.round(175 - (computedDepth / 100) * 105);
+        const computedSpineDev = Math.round(Math.sin(t * 1.2) * 12 + (motionEnergy > 0.4 ? 14 : 4));
+        currentSpineAngle = 180 - computedSpineDev;
+
+        const strokeColor =
+          formQuality === 'PERFECT' ? '#A3E635' : formQuality === 'ACCEPTABLE' ? '#38BDF8' : '#F43F5E';
+        const sway = Math.sin(t) * 10 * motionAmplifier;
+        const flex = (computedDepth / 100) * 45;
+
+        const shoulderL = { x: width * 0.35 + sway, y: height * 0.35 + flex * 0.4 };
+        const shoulderR = { x: width * 0.65 + sway, y: height * 0.35 + flex * 0.4 };
+        const hipCenter = { x: width * 0.5 + sway, y: height * 0.62 + flex * 0.6 };
+        const jointL = { x: width * 0.26 + sway, y: height * 0.48 + flex * 0.9 };
+        const termL = { x: width * 0.3 + sway, y: height * 0.62 + flex * 1.1 };
+
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(shoulderL.x, shoulderL.y);
+        ctx.lineTo(shoulderR.x, shoulderR.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(shoulderL.x, shoulderL.y);
+        ctx.lineTo(jointL.x, jointL.y);
+        ctx.lineTo(termL.x, termL.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo((shoulderL.x + shoulderR.x) / 2, shoulderL.y);
+        ctx.lineTo(hipCenter.x, hipCenter.y);
+        ctx.stroke();
+
+        [shoulderL, shoulderR, jointL, termL, hipCenter].forEach(node => {
+          ctx.fillStyle = strokeColor;
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
 
       setRomDepth(computedDepth);
       setJointAngle(currentJointAngle);
       setSpineAlignment(currentSpineAngle);
 
-      // 3. Strict State Machine: Rep Count ONLY if Form Passes Criteria AND Real Motion Exists!
+      // State Machine for Rep Counter & Inflection
       const rule = exerciseRule;
-      const isSpineGood = computedSpineDev <= rule.maxSpineDeviationDeg;
+      const angleToCheck = isLegExercise ? currentKneeAngle : currentJointAngle;
+      const lockoutAngleThreshold = isLegExercise ? 160 : rule.lockoutMinAngle;
+      const inflectionAngleThreshold = isLegExercise ? 95 : 95;
 
-      if (!isSpineGood) {
-        repCycleRef.current.spineViolations++;
-      }
-      if (computedDepth > repCycleRef.current.highestDepth) {
-        repCycleRef.current.highestDepth = computedDepth;
-      }
-      if (currentJointAngle < repCycleRef.current.lowestAngle) {
-        repCycleRef.current.lowestAngle = currentJointAngle;
-      }
+      if (angleToCheck <= inflectionAngleThreshold || computedDepth >= rule.minRomDepthPct) {
+        setRepState('INFLECTION');
+        repCycleRef.current.hasHitInflection = true;
+        setFormQuality(isFormBroken ? 'POOR' : 'PERFECT');
+        if (!isFormBroken) {
+          setLiveFeedbackCue(rule.concentricCue);
+        }
+      } else if (computedDepth >= 35 && computedDepth < rule.minRomDepthPct) {
+        setRepState('ECCENTRIC');
+        if (!isFormBroken) setLiveFeedbackCue(rule.eccentricCue);
+      } else if (angleToCheck >= lockoutAngleThreshold && computedDepth < 35) {
+        if (repCycleRef.current.hasHitInflection && (isAthleteMoving || poseData?.isPoseDetected)) {
+          const newGoodCount = goodReps + 1;
+          setGoodReps(newGoodCount);
+          setFormQuality('PERFECT');
+          setLiveFeedbackCue('✓ GOOD REP! Crisp Lockout');
+          feedback.playSetComplete();
+          feedback.triggerHaptic([30, 40, 50]);
 
-      // STATE 1: At Lockout
-      if (currentJointAngle >= rule.lockoutMinAngle && computedDepth < 35) {
-        if (repCycleRef.current.hasHitInflection && isAthleteMoving) {
-          const reachedValidDepth = repCycleRef.current.highestDepth >= rule.minRomDepthPct;
-          const posturePassed = repCycleRef.current.spineViolations < 8;
-
-          if (reachedValidDepth && posturePassed) {
-            setGoodReps(prev => prev + 1);
-            setFormQuality('PERFECT');
-            setLiveFeedbackCue(`✓ GOOD REP! Crisp ${rule.primaryJoint} Lockout`);
-            feedback.playSetComplete();
-            feedback.triggerHaptic([30, 40, 50]);
-          } else {
-            setNoReps(prev => prev + 1);
-            setFormQuality('POOR');
-            if (!reachedValidDepth) {
-              setLiveFeedbackCue(
-                `✕ NO REP: Incomplete Depth (${repCycleRef.current.highestDepth}% < ${rule.minRomDepthPct}%)`
-              );
-            } else {
-              setLiveFeedbackCue(`✕ NO REP: Spine deviated by ${computedSpineDev}°! Brace core.`);
-            }
-            feedback.triggerHaptic(90);
+          // Auto-trigger live vision stream every 2nd rep if active
+          if (isLiveStreamActive && newGoodCount % 2 === 0) {
+            triggerLiveAiVisionStream({
+              elbow: currentJointAngle,
+              hipSpine: currentSpineAngle,
+              knee: currentKneeAngle,
+              reps: newGoodCount,
+            });
           }
 
           repCycleRef.current = {
@@ -476,79 +654,8 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           setRepState('LOCKOUT');
         } else {
           setRepState('LOCKOUT');
-          if (Date.now() - lastFeedbackTime > 2500) {
-            setLiveFeedbackCue(isAthleteMoving ? rule.readyCue : '⚡ DETECTING MOTION... STEP IN FRAME & COMMENCE REP');
-            setLastFeedbackTime(Date.now());
-          }
         }
       }
-      // STATE 2: Eccentric
-      else if (computedDepth >= 35 && computedDepth < rule.minRomDepthPct) {
-        setRepState('ECCENTRIC');
-        setLiveFeedbackCue(rule.eccentricCue);
-      }
-      // STATE 3: Peak Inflection
-      else if (computedDepth >= rule.minRomDepthPct) {
-        setRepState('INFLECTION');
-        repCycleRef.current.hasHitInflection = true;
-        setFormQuality(isSpineGood ? 'PERFECT' : 'ACCEPTABLE');
-        setLiveFeedbackCue(rule.concentricCue);
-      }
-
-      // 4. Render Kinetic HUD Lines & Joint Nodes
-      const strokeColor =
-        formQuality === 'PERFECT' ? '#A3E635' : formQuality === 'ACCEPTABLE' ? '#38BDF8' : '#F43F5E';
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(width / 2, 0);
-      ctx.lineTo(width / 2, height);
-      ctx.moveTo(0, height * 0.35);
-      ctx.lineTo(width, height * 0.35);
-      ctx.moveTo(0, height * 0.65);
-      ctx.lineTo(width, height * 0.65);
-      ctx.stroke();
-
-      const sway = Math.sin(t) * 10 * motionAmplifier;
-      const flex = (computedDepth / 100) * 45;
-
-      const shoulderL = { x: width * 0.35 + sway, y: height * 0.35 + flex * 0.4 };
-      const shoulderR = { x: width * 0.65 + sway, y: height * 0.35 + flex * 0.4 };
-      const hipCenter = { x: width * 0.5 + sway, y: height * 0.62 + flex * 0.6 };
-      const jointL = { x: width * 0.26 + sway, y: height * 0.48 + flex * 0.9 };
-      const termL = { x: width * 0.3 + sway, y: height * 0.62 + flex * 1.1 };
-
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 3;
-
-      ctx.beginPath();
-      ctx.moveTo(shoulderL.x, shoulderL.y);
-      ctx.lineTo(shoulderR.x, shoulderR.y);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(shoulderL.x, shoulderL.y);
-      ctx.lineTo(jointL.x, jointL.y);
-      ctx.lineTo(termL.x, termL.y);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo((shoulderL.x + shoulderR.x) / 2, shoulderL.y);
-      ctx.lineTo(hipCenter.x, hipCenter.y);
-      ctx.stroke();
-
-      [shoulderL, shoulderR, jointL, termL, hipCenter].forEach(node => {
-        ctx.fillStyle = strokeColor;
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, 4.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = `${strokeColor}44`;
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, 9, 0, Math.PI * 2);
-        ctx.fill();
-      });
 
       animId = requestAnimationFrame(computeVisionLoop);
     };
@@ -850,6 +957,43 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Live AI Vision Stream Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                feedback.hapticLight();
+                setIsLiveStreamActive(!isLiveStreamActive);
+              }}
+              title={isLiveStreamActive ? 'Turn Live AI Stream Off' : 'Turn Live AI Stream On'}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono font-bold transition active:scale-95 ${
+                isLiveStreamActive
+                  ? 'bg-rose-500/20 border-rose-500/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-pulse'
+                  : 'bg-white/[0.06] border-white/10 text-zinc-400 hover:text-white'
+              }`}
+            >
+              <Radio className={`h-3.5 w-3.5 ${isLiveStreamActive ? 'text-rose-400' : 'text-zinc-400'}`} />
+              <span className="hidden xs:inline">
+                {isLiveStreamActive ? 'LIVE AI: ON' : 'LIVE AI: OFF'}
+              </span>
+            </button>
+
+            {/* Audio Voice Directive Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                feedback.hapticLight();
+                setIsVoiceEnabled(!isVoiceEnabled);
+              }}
+              title={isVoiceEnabled ? 'Mute Coach Voice' : 'Enable Coach Voice'}
+              className={`p-2 rounded-xl border transition active:scale-90 ${
+                isVoiceEnabled
+                  ? 'bg-[#A3E635]/10 border-[#A3E635]/30 text-[#A3E635]'
+                  : 'bg-white/[0.06] border-white/10 text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              {isVoiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
+
             <button
               type="button"
               onClick={toggleCamera}
@@ -1048,6 +1192,56 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
               <span className="text-[10px] font-mono text-zinc-300 bg-black/80 px-2.5 py-1 rounded-lg border border-white/10">
                 Stand 2m back
               </span>
+            </div>
+          )}
+
+          {/* Floating Live AI Coach HUD Ticker */}
+          {scannerMode === 'FORM' && (
+            <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-none">
+              <div
+                className={`rounded-xl px-3.5 py-2.5 backdrop-blur-md border shadow-2xl transition-all duration-300 ${
+                  liveCoachTickerText
+                    ? 'bg-black/90 border-[#A3E635]/60 text-white shadow-[0_0_20px_rgba(163,230,53,0.25)]'
+                    : isLiveStreamActive
+                    ? 'bg-black/80 border-rose-500/40 text-zinc-200'
+                    : 'bg-black/70 border-white/10 text-zinc-400'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="relative flex items-center justify-center shrink-0">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        isLiveStreamActive ? 'bg-rose-500 animate-ping' : 'bg-[#A3E635]'
+                      }`}
+                    />
+                    <span
+                      className={`absolute h-2 w-2 rounded-full ${
+                        isLiveStreamActive ? 'bg-rose-500' : 'bg-[#A3E635]'
+                      }`}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 text-[9px] font-mono uppercase tracking-wider">
+                      <span
+                        className={
+                          isLiveStreamActive ? 'text-rose-400 font-bold' : 'text-[#A3E635] font-bold'
+                        }
+                      >
+                        {isLiveStreamActive ? '🔴 LIVE GEMINI VISION FEED' : 'AI COACH HUD'}
+                      </span>
+                      <span className="text-zinc-500">
+                        {isLiveStreamActive ? 'Auto-Critique (every 2 reps)' : 'Ready'}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold truncate text-zinc-100 mt-0.5">
+                      {liveCoachTickerText ||
+                        (isLiveStreamActive
+                          ? 'Perform reps in frame. Gemini Vision is observing your biomechanics...'
+                          : 'Tap 🔴 LIVE AI at top or click Analyze Form below.')}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

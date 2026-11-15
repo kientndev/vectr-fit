@@ -14,6 +14,7 @@
     "@capacitor/cli": "^8.6.2",
     "@capacitor/core": "^8.6.2",
     "@clerk/clerk-react": "^5.61.3",
+    "@mediapipe/tasks-vision": "^1.2.3",
     "convex": "^1.19.4",
     "lucide-react": "^1.72.0",
     "next": "16.4.6",

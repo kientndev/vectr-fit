@@ -541,9 +541,17 @@ export const analyzeCameraFrame = action({
     mode: v.union(v.literal('form'), v.literal('posture'), v.literal('meal')),
     exerciseName: v.optional(v.string()),
     prescription: v.optional(v.string()),
+    telemetry: v.optional(
+      v.object({
+        elbowAngle: v.number(),
+        hipSpineAngle: v.number(),
+        kneeAngle: v.number(),
+        repsCompleted: v.number(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
-    const { imageBase64, mode, exerciseName = 'Exercise Form Check', prescription = 'Standard Set' } = args;
+    const { imageBase64, mode, exerciseName = 'Exercise Form Check', prescription = 'Standard Set', telemetry } = args;
     const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
     const geminiKey = process.env.GEMINI_API_KEY;
 
@@ -554,6 +562,11 @@ export const analyzeCameraFrame = action({
         if (mode === 'form') {
           systemPrompt = `You are VECTR FIT Elite Biomechanics AI Coach.
 Analyze the athlete performing "${exerciseName}" (${prescription}) from this captured video frame.
+${telemetry ? `Live Sensor Joint Angles:
+- Measured Elbow Flexion: ${telemetry.elbowAngle}°
+- Measured Hip/Spine Alignment: ${telemetry.hipSpineAngle}°
+- Measured Knee Angle: ${telemetry.kneeAngle}°
+- Current Rep Count: ${telemetry.repsCompleted}` : ''}
 Evaluate kinetic chain, joint angles, lockout, ROM, and spinal alignment.
 Return STRICT JSON:
 {
@@ -563,7 +576,8 @@ Return STRICT JSON:
   "injuryRisk": "LOW",
   "whatLookedSolid": "1 concise sentence praising their specific movement mechanics",
   "microCorrection": "1 actionable sentence providing a technical biomechanical fix",
-  "drillRecommendation": "Targeted corrective drill"
+  "drillRecommendation": "Targeted corrective drill",
+  "liveCoachTicker": "Concise 1-sentence real-time voice callout advising on the next rep"
 }`;
         } else if (mode === 'posture') {
           systemPrompt = `You are VECTR FIT Posture & Kinetic Alignment AI.
