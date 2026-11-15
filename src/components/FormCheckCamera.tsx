@@ -34,7 +34,7 @@ if (typeof window !== 'undefined') {
     .then(mod => {
       CapacitorCamera = mod.Camera;
     })
-    .catch(() => {});
+    .catch(() => { });
 }
 
 export type ScannerMode = 'FORM' | 'POSTURE' | 'MEAL';
@@ -465,7 +465,7 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           }
         }
         prevFrameData.current = new Uint8ClampedArray(currentData);
-      } catch {}
+      } catch { }
 
       const isAthleteMoving = motionEnergy > 0.025;
       setMotionDetected(isAthleteMoving);
@@ -924,33 +924,30 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
             <button
               type="button"
               onClick={() => handleSwitchMode('FORM')}
-              className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold tracking-tight transition ${
-                scannerMode === 'FORM'
+              className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold tracking-tight transition ${scannerMode === 'FORM'
                   ? 'bg-[#A3E635] text-black shadow-sm'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               FORM
             </button>
             <button
               type="button"
               onClick={() => handleSwitchMode('POSTURE')}
-              className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold tracking-tight transition ${
-                scannerMode === 'POSTURE'
+              className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold tracking-tight transition ${scannerMode === 'POSTURE'
                   ? 'bg-[#A3E635] text-black shadow-sm'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               POSTURE
             </button>
             <button
               type="button"
               onClick={() => handleSwitchMode('MEAL')}
-              className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold tracking-tight transition ${
-                scannerMode === 'MEAL'
+              className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold tracking-tight transition ${scannerMode === 'MEAL'
                   ? 'bg-[#A3E635] text-black shadow-sm'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               MEAL
             </button>
@@ -965,11 +962,10 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
                 setIsLiveStreamActive(!isLiveStreamActive);
               }}
               title={isLiveStreamActive ? 'Turn Live AI Stream Off' : 'Turn Live AI Stream On'}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono font-bold transition active:scale-95 ${
-                isLiveStreamActive
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[10px] font-mono font-bold transition active:scale-95 ${isLiveStreamActive
                   ? 'bg-rose-500/20 border-rose-500/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)] animate-pulse'
                   : 'bg-white/[0.06] border-white/10 text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               <Radio className={`h-3.5 w-3.5 ${isLiveStreamActive ? 'text-rose-400' : 'text-zinc-400'}`} />
               <span className="hidden xs:inline">
@@ -985,11 +981,10 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
                 setIsVoiceEnabled(!isVoiceEnabled);
               }}
               title={isVoiceEnabled ? 'Mute Coach Voice' : 'Enable Coach Voice'}
-              className={`p-2 rounded-xl border transition active:scale-90 ${
-                isVoiceEnabled
+              className={`p-2 rounded-xl border transition active:scale-90 ${isVoiceEnabled
                   ? 'bg-[#A3E635]/10 border-[#A3E635]/30 text-[#A3E635]'
                   : 'bg-white/[0.06] border-white/10 text-zinc-500 hover:text-zinc-300'
-              }`}
+                }`}
             >
               {isVoiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
@@ -1022,9 +1017,8 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
             </div>
           ) : (
             <div className="flex items-center justify-between w-full">
-              <span className={`text-[11px] font-mono font-bold ${
-                dailyScansUsed >= 1 ? 'text-amber-400' : 'text-zinc-300'
-              }`}>
+              <span className={`text-[11px] font-mono font-bold ${dailyScansUsed >= 1 ? 'text-amber-400' : 'text-zinc-300'
+                }`}>
                 FREE TIER: {Math.max(0, 1 - dailyScansUsed)}/1 DAILY AI SCAN REMAINING
               </span>
               <button
@@ -1173,18 +1167,16 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
                 <button
                   type="button"
                   onClick={() => setPosturePoseView('FRONT')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    posturePoseView === 'FRONT' ? 'bg-[#A3E635] text-black' : 'text-zinc-400'
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold ${posturePoseView === 'FRONT' ? 'bg-[#A3E635] text-black' : 'text-zinc-400'
+                    }`}
                 >
                   Front View
                 </button>
                 <button
                   type="button"
                   onClick={() => setPosturePoseView('SIDE')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    posturePoseView === 'SIDE' ? 'bg-[#A3E635] text-black' : 'text-zinc-400'
-                  }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold ${posturePoseView === 'SIDE' ? 'bg-[#A3E635] text-black' : 'text-zinc-400'
+                    }`}
                 >
                   Side View
                 </button>
@@ -1199,25 +1191,22 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           {scannerMode === 'FORM' && (
             <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-none">
               <div
-                className={`rounded-xl px-3.5 py-2.5 backdrop-blur-md border shadow-2xl transition-all duration-300 ${
-                  liveCoachTickerText
+                className={`rounded-xl px-3.5 py-2.5 backdrop-blur-md border shadow-2xl transition-all duration-300 ${liveCoachTickerText
                     ? 'bg-black/90 border-[#A3E635]/60 text-white shadow-[0_0_20px_rgba(163,230,53,0.25)]'
                     : isLiveStreamActive
-                    ? 'bg-black/80 border-rose-500/40 text-zinc-200'
-                    : 'bg-black/70 border-white/10 text-zinc-400'
-                }`}
+                      ? 'bg-black/80 border-rose-500/40 text-zinc-200'
+                      : 'bg-black/70 border-white/10 text-zinc-400'
+                  }`}
               >
                 <div className="flex items-center gap-2.5">
                   <div className="relative flex items-center justify-center shrink-0">
                     <span
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        isLiveStreamActive ? 'bg-rose-500 animate-ping' : 'bg-[#A3E635]'
-                      }`}
+                      className={`h-2.5 w-2.5 rounded-full ${isLiveStreamActive ? 'bg-rose-500 animate-ping' : 'bg-[#A3E635]'
+                        }`}
                     />
                     <span
-                      className={`absolute h-2 w-2 rounded-full ${
-                        isLiveStreamActive ? 'bg-rose-500' : 'bg-[#A3E635]'
-                      }`}
+                      className={`absolute h-2 w-2 rounded-full ${isLiveStreamActive ? 'bg-rose-500' : 'bg-[#A3E635]'
+                        }`}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -1303,13 +1292,12 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
               <div className="p-2 rounded-lg bg-black/60 border border-white/[0.08]">
                 <div className="text-zinc-400 uppercase text-[9px]">INJURY RISK</div>
                 <div
-                  className={`font-black uppercase truncate mt-0.5 ${
-                    analysisResult.injuryRisk === 'HIGH'
+                  className={`font-black uppercase truncate mt-0.5 ${analysisResult.injuryRisk === 'HIGH'
                       ? 'text-rose-400'
                       : analysisResult.injuryRisk === 'MODERATE'
-                      ? 'text-amber-400'
-                      : 'text-[#A3E635]'
-                  }`}
+                        ? 'text-amber-400'
+                        : 'text-[#A3E635]'
+                    }`}
                 >
                   {analysisResult.injuryRisk || 'LOW'}
                 </div>
