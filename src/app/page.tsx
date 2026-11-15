@@ -447,109 +447,109 @@ export default function Home() {
       postureSymmetry: 90,
       coreRigidity: 85,
     }));
-        return {
-          overallScore: 88,
-          potentialScore: 96,
-          spinalPosture: 86,
-          shoulderSymmetry: 90,
-          coreAlignment: 85,
-          athleticFrame: 89,
-          primaryCritique: 'Slight rounded shoulder posture with forward head bias. Lower pelvic alignment is balanced.',
-          correctiveDrills: [
-            { name: 'Prone Scapular Y-T-W Raises', reps: '2 sets × 12 reps', cue: 'Depress traps; tuck chin.' },
-            { name: 'Dead Bug with Hollow Core Press', reps: '3 sets × 10 reps/side', cue: 'Glue lumbar flat to the floor.' },
-          ],
-        };
-      };
+    return {
+      overallScore: 88,
+      potentialScore: 96,
+      spinalPosture: 86,
+      shoulderSymmetry: 90,
+      coreAlignment: 85,
+      athleticFrame: 89,
+      primaryCritique: 'Slight rounded shoulder posture with forward head bias. Lower pelvic alignment is balanced.',
+      correctiveDrills: [
+        { name: 'Prone Scapular Y-T-W Raises', reps: '2 sets × 12 reps', cue: 'Depress traps; tuck chin.' },
+        { name: 'Dead Bug with Hollow Core Press', reps: '3 sets × 10 reps/side', cue: 'Glue lumbar flat to the floor.' },
+      ],
+    };
+  };
 
-      // Handler: Critique Meal & Macros (Mode C)
-      const handleCritiqueMealSnapshot = async (payload: {
-        imageBase64: string;
-      }) => {
-        if (critiqueMealAction) {
-          try {
-            const res = await critiqueMealAction({
-              userId: effectiveUserId,
-              imageBase64: payload.imageBase64,
-            });
-            awardXp(100, '🥩 MEAL SCANNED & LOGGED');
-            setAthleteStats(prev => ({
-              ...prev,
-              cnsRecovery: Math.min(99, prev.cnsRecovery + 2),
-              overallScore: Math.min(99, prev.overallScore + 1),
-            }));
-            return res;
-          } catch (e) {
-            console.warn('Convex meal action error:', e);
-          }
-        }
+  // Handler: Critique Meal & Macros (Mode C)
+  const handleCritiqueMealSnapshot = async (payload: {
+    imageBase64: string;
+  }) => {
+    if (critiqueMealAction) {
+      try {
+        const res = await critiqueMealAction({
+          userId: effectiveUserId,
+          imageBase64: payload.imageBase64,
+        });
         awardXp(100, '🥩 MEAL SCANNED & LOGGED');
         setAthleteStats(prev => ({
           ...prev,
           cnsRecovery: Math.min(99, prev.cnsRecovery + 2),
           overallScore: Math.min(99, prev.overallScore + 1),
         }));
-        return {
-          mealName: 'Grilled Chicken, Jasmine Rice & Steamed Greens',
-          proteinGrams: 46,
-          calories: 560,
-          carbsGrams: 52,
-          fatsGrams: 14,
-          cleanScore: 94,
-          critique: 'Optimal leucine trigger (>3g) achieved with complete amino acid profile. Clean complex carbohydrate partitioning.',
+        return res;
+      } catch (e) {
+        console.warn('Convex meal action error:', e);
+      }
+    }
+    awardXp(100, '🥩 MEAL SCANNED & LOGGED');
+    setAthleteStats(prev => ({
+      ...prev,
+      cnsRecovery: Math.min(99, prev.cnsRecovery + 2),
+      overallScore: Math.min(99, prev.overallScore + 1),
+    }));
+    return {
+      mealName: 'Grilled Chicken, Jasmine Rice & Steamed Greens',
+      proteinGrams: 46,
+      calories: 560,
+      carbsGrams: 52,
+      fatsGrams: 14,
+      cleanScore: 94,
+      critique: 'Optimal leucine trigger (>3g) achieved with complete amino acid profile. Clean complex carbohydrate partitioning.',
+    };
+  };
+
+  // 1-Tap Add Corrective Drill to Today's Workout
+  const handleAddCorrectiveDrill = (drill: { name: string; reps: string; cue: string }) => {
+    const newExercise: Exercise = {
+      id: `drill_${Date.now()}`,
+      name: drill.name,
+      category: 'FINISHER',
+      targetMuscle: 'Corrective & Kinetic Posture',
+      sets: 2,
+      repsOrHold: drill.reps,
+      restSeconds: 45,
+      rpe: 'RPE 6.5',
+      formCue: drill.cue,
+      isAdapted: true,
+      protectionTag: 'Posture Drill',
+    };
+
+    setProtocol(prev => {
+      const nextBlocks = [...prev.blocks];
+      if (nextBlocks.length > 0) {
+        nextBlocks[nextBlocks.length - 1] = {
+          ...nextBlocks[nextBlocks.length - 1],
+          exercises: [...nextBlocks[nextBlocks.length - 1].exercises, newExercise],
         };
-      };
+      }
+      return { ...prev, blocks: nextBlocks };
+    });
 
-      // 1-Tap Add Corrective Drill to Today's Workout
-      const handleAddCorrectiveDrill = (drill: { name: string; reps: string; cue: string }) => {
-        const newExercise: Exercise = {
-          id: `drill_${Date.now()}`,
-          name: drill.name,
-          category: 'FINISHER',
-          targetMuscle: 'Corrective & Kinetic Posture',
-          sets: 2,
-          repsOrHold: drill.reps,
-          restSeconds: 45,
-          rpe: 'RPE 6.5',
-          formCue: drill.cue,
-          isAdapted: true,
-          protectionTag: 'Posture Drill',
-        };
+    awardXp(50, '⚡ CORRECTIVE DRILL ADDED');
+    feedback.playSetComplete();
+  };
 
-        setProtocol(prev => {
-          const nextBlocks = [...prev.blocks];
-          if (nextBlocks.length > 0) {
-            nextBlocks[nextBlocks.length - 1] = {
-              ...nextBlocks[nextBlocks.length - 1],
-              exercises: [...nextBlocks[nextBlocks.length - 1].exercises, newExercise],
-            };
-          }
-          return { ...prev, blocks: nextBlocks };
-        });
+  // Auto-complete fuel target when meal is logged via Camera Proof
+  const handleMealLogged = (protein: number) => {
+    // Find any macro target or complete active non-hydration targets
+    const macroTarget = protocol.fuelTargets.find(
+      t => t.id === 'fuel_protein' || t.label.toLowerCase().includes('protein') || t.label.toLowerCase().includes('collagen')
+    );
+    if (macroTarget) {
+      handleToggleFuel(macroTarget.id);
+    } else {
+      setCompletedFuel(prev => ({
+        ...prev,
+        fuel_1: true,
+      }));
+    }
+    awardXp(100, `🥩 ${protein}g MEAL PROOF CRITIQUE (+100 XP · 2x)`);
+  };
 
-        awardXp(50, '⚡ CORRECTIVE DRILL ADDED');
-        feedback.playSetComplete();
-      };
-
-      // Auto-complete fuel target when meal is logged via Camera Proof
-      const handleMealLogged = (protein: number) => {
-        // Find any macro target or complete active non-hydration targets
-        const macroTarget = protocol.fuelTargets.find(
-          t => t.id === 'fuel_protein' || t.label.toLowerCase().includes('protein') || t.label.toLowerCase().includes('collagen')
-        );
-        if (macroTarget) {
-          handleToggleFuel(macroTarget.id);
-        } else {
-          setCompletedFuel(prev => ({
-            ...prev,
-            fuel_1: true,
-          }));
-        }
-        awardXp(100, `🥩 ${protein}g MEAL PROOF CRITIQUE (+100 XP · 2x)`);
-      };
-
-      // Countdown effect for restTimer
-      useEffect(() => {
+  // Countdown effect for restTimer
+  useEffect(() => {
     let interval: any = null;
     if (restTimer.isActive && restTimer.isRunning && restTimer.remainingSeconds > 0) {
       interval = setInterval(() => {
