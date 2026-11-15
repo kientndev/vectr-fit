@@ -47,7 +47,13 @@ interface DailyBlueprintProps {
   showFuelAndRules?: boolean;
   userXp?: number;
   floatingXp?: { id: number; text: string } | null;
-  onOpenFormCamera?: (exerciseName: string) => void;
+  onOpenFormCamera?: (
+    exerciseName: string,
+    mode?: 'FORM' | 'POSTURE' | 'MEAL',
+    prescription?: string,
+    biomechanicalCues?: string,
+    onLockInSet?: () => void
+  ) => void;
 }
 
 export const DailyBlueprint: React.FC<DailyBlueprintProps> = ({
@@ -233,7 +239,14 @@ ${protocol.blocks
             {onOpenFormCamera && (
               <button
                 type="button"
-                onClick={() => onOpenFormCamera(allExercises[0]?.name || 'Movement')}
+                onClick={() =>
+                  onOpenFormCamera(
+                    allExercises[0]?.name || 'Movement',
+                    'FORM',
+                    allExercises[0] ? `${allExercises[0].sets} × ${allExercises[0].repsOrHold}` : undefined,
+                    allExercises[0]?.formCue
+                  )
+                }
                 className="flex items-center gap-1.5 rounded-lg bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 px-2.5 py-1 text-xs font-bold text-[#A3E635] active:scale-95 transition"
               >
                 <Camera className="h-3.5 w-3.5" />

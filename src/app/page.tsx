@@ -84,6 +84,9 @@ export default function Home() {
   const [isCameraOpen, setIsCameraOpen] = useState<boolean>(false);
   const [cameraExerciseName, setCameraExerciseName] = useState<string>('Standard Push-up');
   const [cameraScannerMode, setCameraScannerMode] = useState<ScannerMode>('FORM');
+  const [cameraPrescription, setCameraPrescription] = useState<string | undefined>(undefined);
+  const [cameraBiomechanicalCues, setCameraBiomechanicalCues] = useState<string | undefined>(undefined);
+  const [cameraOnLockInSet, setCameraOnLockInSet] = useState<(() => void) | undefined>(undefined);
   const [dailyScansUsed, setDailyScansUsed] = useState<number>(0);
 
   // Critique AI & Leaderboard Modals
@@ -151,6 +154,7 @@ export default function Home() {
   let completeOnboardingMutation: any = null;
   let generateOrAdjustAction: any = null;
   let analyzeExerciseFormAction: any = null;
+  let analyzeCameraFrameAction: any = null;
   let critiquePostureAction: any = null;
   let critiqueMealAction: any = null;
   let leaderboardData: any = null;
@@ -171,6 +175,7 @@ export default function Home() {
     completeOnboardingMutation = useMutation(api.protocols.completeOnboarding);
     generateOrAdjustAction = useAction(api.aiCoach.generateOrAdjustProtocol);
     analyzeExerciseFormAction = useAction(api.aiCoach.analyzeExerciseForm);
+    analyzeCameraFrameAction = useAction(api.aiCoach.analyzeCameraFrame);
     critiquePostureAction = useAction(api.aiCoach.critiquePostureAndPhysique);
     critiqueMealAction = useAction(api.aiCoach.critiqueMealMacros);
   } catch {
@@ -339,10 +344,59 @@ export default function Home() {
   };
 
   // Handler: Open Form Check Camera for an exercise
-  const handleOpenFormCamera = (exerciseName: string, mode: ScannerMode = 'FORM') => {
+  const handleOpenFormCamera = (
+    exerciseName: string,
+    mode: ScannerMode = 'FORM',
+    prescription?: string,
+    biomechanicalCues?: string,
+    onLockInSet?: () => void
+  ) => {
     setCameraExerciseName(exerciseName);
     setCameraScannerMode(mode);
+    setCameraPrescription(prescription);
+    setCameraBiomechanicalCues(biomechanicalCues);
+    setCameraOnLockInSet(() => onLockInSet);
     setIsCameraOpen(true);
+  };
+
+  // Handler: Comprehensive Vision Analysis through Convex analyzeCameraFrame
+  const handleAnalyzeCameraFrame = async (data: {
+    imageBase64: string;
+    mode: 'form' | 'posture' | 'meal';
+    exerciseName?: string;
+    prescription?: string;
+  }) => {
+    if (analyzeCameraFrameAction) {
+      try {
+        const res = await analyzeCameraFrameAction({
+          imageBase64: data.imageBase64,
+          mode: data.mode,
+          exerciseName: data.exerciseName,
+          prescription: data.prescription,
+        });
+        if (res && res.score) {
+          setAthleteStats(prev => ({
+            ...prev,
+            overallScore: Math.round((prev.overallScore * 2 + res.score) / 3),
+            strength: Math.min(99, prev.strength + (res.score >= 90 ? 1 : 0)),
+            postureSymmetry: data.mode === 'posture' ? res.spinalPosture ?? prev.postureSymmetry : prev.postureSymmetry,
+          }));
+        }
+        return res;
+      } catch (err) {
+        console.warn('Convex analyzeCameraFrame error, falling back:', err);
+      }
+    }
+    return null;
+  };
+
+  // Handler: Lock In Camera-Verified Set (+50 XP)
+  const handleLockInVerifiedSet = () => {
+    if (cameraOnLockInSet) {
+      cameraOnLockInSet();
+    } else {
+      awardXp(50, '⚡ CAMERA VERIFIED SET LOCKED IN (+50 XP)');
+    }
   };
 
   // Handler: Open Camera specifically for Meal & Macro Critique
@@ -1178,6 +1232,8 @@ export default function Home() {
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         exerciseName={cameraExerciseName}
+        prescription={cameraPrescription}
+        biomechanicalCues={cameraBiomechanicalCues}
         coachPersona={calibration.persona}
         initialMode={cameraScannerMode}
         isPro={isPro}
@@ -1185,10 +1241,12 @@ export default function Home() {
         onRequirePro={() => setIsProModalOpen(true)}
         onScanUsed={handleScanUsed}
         onAnalyze={handleAnalyzeFormSnapshot}
+        onAnalyzeCameraFrame={handleAnalyzeCameraFrame}
         onCritiquePosture={handleCritiquePostureSnapshot}
         onCritiqueMeal={handleCritiqueMealSnapshot}
         onAddCorrectiveDrill={handleAddCorrectiveDrill}
         onMealLogged={handleMealLogged}
+        onLockInSet={handleLockInVerifiedSet}
       />
 
       {/* Global & Tier Division Leaderboard Modal */}

@@ -26,7 +26,13 @@ interface ActiveSetPlayerProps {
   totalSets: number;
   onSetVerified: (exercise: Exercise, setIndex: number, xpEarned: number) => void;
   onClose: () => void;
-  onOpenFormCamera?: (exerciseName: string) => void;
+  onOpenFormCamera?: (
+    exerciseName: string,
+    mode?: 'FORM' | 'POSTURE' | 'MEAL',
+    prescription?: string,
+    biomechanicalCues?: string,
+    onLockInSet?: () => void
+  ) => void;
 }
 
 export const ActiveSetPlayer: React.FC<ActiveSetPlayerProps> = ({
@@ -136,7 +142,16 @@ export const ActiveSetPlayer: React.FC<ActiveSetPlayerProps> = ({
   const handleLaunchCamera = () => {
     feedback.hapticLight();
     if (onOpenFormCamera) {
-      onOpenFormCamera(exercise.name);
+      onOpenFormCamera(
+        exercise.name,
+        'FORM',
+        `Set ${setIndex + 1} of ${totalSets} · ${exercise.repsOrHold}`,
+        exercise.formCue,
+        () => {
+          onSetVerified(exercise, setIndex, 50);
+          onClose();
+        }
+      );
     }
   };
 
