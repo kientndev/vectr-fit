@@ -154,7 +154,7 @@ export function useRealtimePose(videoRef: React.RefObject<HTMLVideoElement | nul
     const video = videoRef.current;
     const landmarker = landmarkerRef.current;
 
-    if (!video || !landmarker || video.readyState < 2) {
+    if (!video || !landmarker || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
       return null;
     }
 

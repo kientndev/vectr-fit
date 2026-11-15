@@ -365,6 +365,12 @@ export default function Home() {
     mode: 'form' | 'posture' | 'meal';
     exerciseName?: string;
     prescription?: string;
+    telemetry?: {
+      elbowAngle?: number;
+      hipSpineAngle?: number;
+      kneeAngle?: number;
+      repsCompleted?: number;
+    };
   }) => {
     if (analyzeCameraFrameAction) {
       try {
@@ -373,6 +379,7 @@ export default function Home() {
           mode: data.mode,
           exerciseName: data.exerciseName,
           prescription: data.prescription,
+          telemetry: data.telemetry,
         });
         if (res && res.score) {
           setAthleteStats(prev => ({

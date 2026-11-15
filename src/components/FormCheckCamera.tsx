@@ -92,6 +92,12 @@ interface FormCheckCameraProps {
     mode: 'form' | 'posture' | 'meal';
     exerciseName?: string;
     prescription?: string;
+    telemetry?: {
+      elbowAngle?: number;
+      hipSpineAngle?: number;
+      kneeAngle?: number;
+      repsCompleted?: number;
+    };
   }) => Promise<any>;
   initialMode?: ScannerMode;
   isPro?: boolean;
@@ -185,6 +191,12 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
         mode: 'form',
         exerciseName,
         prescription,
+        telemetry: {
+          elbowAngle: Math.round(angles.elbow),
+          hipSpineAngle: Math.round(angles.hipSpine),
+          kneeAngle: Math.round(angles.knee),
+          repsCompleted: angles.reps,
+        },
       });
 
       if (res) {
@@ -742,6 +754,11 @@ export const FormCheckCamera: React.FC<FormCheckCameraProps> = ({
           mode: 'form',
           exerciseName,
           prescription,
+          telemetry: {
+            elbowAngle: jointAngle,
+            hipSpineAngle: spineAlignment,
+            repsCompleted: goodReps,
+          },
         });
         if (res) {
           setAnalysisResult({
