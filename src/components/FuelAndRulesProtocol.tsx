@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DailyProtocol, FuelTarget, AvoidRule } from '../types/protocol';
 import { feedback } from '../lib/feedback';
+import { ScrollReveal } from './ScrollReveal';
 import {
   Droplet,
   Zap,
@@ -295,44 +296,46 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
       {/* 60s CAMERA LOCK-IN CHALLENGE BANNER                       */}
       {/* ========================================================= */}
       {onOpenChallengeCam && (
-        <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/[0.08] to-amber-500/[0.02] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-black font-extrabold text-sm shadow-[0_0_15px_rgba(251,191,36,0.4)]">
-              ⚡
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
-                  DAILY CAMERA CHALLENGE
-                </span>
-                <span className="rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.2">
-                  +150 BONUS XP
-                </span>
+        <ScrollReveal direction="left" distance={40} duration={0.65}>
+          <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/[0.08] to-amber-500/[0.02] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-black font-extrabold text-sm shadow-[0_0_15px_rgba(251,191,36,0.4)]">
+                ⚡
               </div>
-              <h4 className="text-sm font-bold text-amber-300 mt-0.5">
-                60s Camera Lock-In Challenge
-              </h4>
-              <p className="text-xs text-zinc-100 font-medium mt-0.5">
-                Complete 15 Strict Form Push-ups or 45s Plank on Camera
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
+                    DAILY CAMERA CHALLENGE
+                  </span>
+                  <span className="rounded bg-amber-400/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.2">
+                    +150 BONUS XP
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-amber-300 mt-0.5">
+                  60s Camera Lock-In Challenge
+                </h4>
+                <p className="text-xs text-zinc-100 font-medium mt-0.5">
+                  Complete 15 Strict Form Push-ups or 45s Plank on Camera
+                </p>
+              </div>
             </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={onOpenChallengeCam}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-400 text-black font-extrabold text-xs hover:bg-amber-300 active:scale-95 transition shadow-sm whitespace-nowrap"
-          >
-            Launch Challenge
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onOpenChallengeCam}
+              className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-400 text-black font-extrabold text-xs hover:bg-amber-300 active:scale-95 transition shadow-sm whitespace-nowrap"
+            >
+              Launch Challenge
+            </button>
+          </div>
+        </ScrollReveal>
       )}
 
       {/* ========================================================= */}
       {/* SECTION 01 // BIO-FUEL TELEMETRY                          */}
       {/* ========================================================= */}
       <section className="space-y-3.5">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+        <ScrollReveal direction="left" distance={30} className="flex items-center justify-between border-b border-white/[0.06] pb-2">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#A3E635]" />
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
@@ -342,16 +345,17 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
           <span className="text-[11px] font-mono text-[#A3E635]">
             {completedFuelCount} / {totalFuelCount} LOCKED
           </span>
-        </div>
+        </ScrollReveal>
 
-        {/* 1. INTERACTIVE HYDRATION CARD (7-Segment Meter + Anti-Cheat Cooldown) */}
-        <div
-          className={`rounded-2xl border p-4 transition-all ${
-            isHydrationComplete
-              ? 'border-[#A3E635]/60 bg-[#141a12] shadow-[0_0_15px_rgba(163,230,53,0.15)]'
-              : 'border-white/[0.08] bg-[#121215]'
-          }`}
-        >
+        {/* 1. INTERACTIVE HYDRATION CARD (Floats in from Right) */}
+        <ScrollReveal direction="right" distance={45} duration={0.7}>
+          <div
+            className={`rounded-2xl border p-4 transition-all ${
+              isHydrationComplete
+                ? 'border-[#A3E635]/60 bg-[#141a12] shadow-[0_0_15px_rgba(163,230,53,0.15)]'
+                : 'border-white/[0.08] bg-[#121215]'
+            }`}
+          >
           {/* Header Row */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2.5">
@@ -473,6 +477,7 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
             )}
           </div>
         </div>
+        </ScrollReveal>
 
         {/* 2. NON-HYDRATION BIO-FUEL CARDS (Photo Proof vs Hold-to-Log) */}
         {nonHydrationTargets.map((target, idx) => {
@@ -484,14 +489,20 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
               : 'Synthesizes type-I collagen cross-links in loaded tendons and capsular ligaments.';
 
           return (
-            <div
+            <ScrollReveal
               key={target.id}
-              className={`rounded-2xl border p-4 transition-all ${
-                isDone
-                  ? 'border-[#A3E635]/60 bg-[#141a12] shadow-[0_0_15px_rgba(163,230,53,0.15)]'
-                  : 'border-white/[0.08] bg-[#121215]'
-              }`}
+              direction={idx % 2 === 0 ? 'left' : 'right'}
+              distance={40}
+              duration={0.65}
+              delay={0.06 * idx}
             >
+              <div
+                className={`rounded-2xl border p-4 transition-all ${
+                  isDone
+                    ? 'border-[#A3E635]/60 bg-[#141a12] shadow-[0_0_15px_rgba(163,230,53,0.15)]'
+                    : 'border-white/[0.08] bg-[#121215]'
+                }`}
+              >
               {/* Header: Vertical Stacked Title + Prescription Pill */}
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2.5">
@@ -586,6 +597,7 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
                 )}
               </div>
             </div>
+          </ScrollReveal>
           );
         })}
       </section>
@@ -594,7 +606,7 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
       {/* SECTION 02 // DISCIPLINE GUARDRAILS                       */}
       {/* ========================================================= */}
       <section className="space-y-3.5">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2">
+        <ScrollReveal direction="left" distance={30} className="flex items-center justify-between border-b border-white/[0.06] pb-2">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
@@ -604,7 +616,7 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
           <span className="text-[11px] font-mono text-emerald-400">
             {completedAvoidCount} / {totalAvoidCount} HELD
           </span>
-        </div>
+        </ScrollReveal>
 
         <div className="space-y-3">
           {protocol.avoidRules.map((rule, idx) => {
@@ -618,95 +630,102 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
                 : 'Blue light suppresses pineal melatonin by up to 58%, depriving you of deep stage-3 slow-wave recovery.';
 
             return (
-              <div
+              <ScrollReveal
                 key={rule.id}
-                className={`rounded-2xl border p-4 transition-all ${
-                  isDone
-                    ? 'border-emerald-500/60 bg-[#121c16] shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                    : 'border-white/[0.08] bg-[#121215]'
-                }`}
+                direction={idx % 2 === 0 ? 'left' : 'right'}
+                distance={40}
+                duration={0.65}
+                delay={0.06 * idx}
               >
-                {/* Header */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                      <Shield className="h-5 w-5" />
+                <div
+                  className={`rounded-2xl border p-4 transition-all ${
+                    isDone
+                      ? 'border-emerald-500/60 bg-[#121c16] shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                      : 'border-white/[0.08] bg-[#121215]'
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                        <Shield className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono font-bold text-red-400 tracking-wider uppercase block">
+                          ANTI-GOAL GUARDRAIL
+                        </span>
+                        <h4 className="text-sm font-bold text-white tracking-tight">
+                          {rule.title}
+                        </h4>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-red-400 tracking-wider uppercase block">
-                        ANTI-GOAL GUARDRAIL
-                      </span>
-                      <h4 className="text-sm font-bold text-white tracking-tight">
-                        {rule.title}
-                      </h4>
-                    </div>
+
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                      isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/15 text-red-300'
+                    }`}>
+                      {isDone ? 'MAINTAINED' : 'CRITICAL'}
+                    </span>
                   </div>
 
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                    isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/15 text-red-300'
-                  }`}>
-                    {isDone ? 'MAINTAINED' : 'CRITICAL'}
-                  </span>
-                </div>
+                  {/* Punchy 1-Line Badge + Science Toggle */}
+                  <div className="mt-3 rounded-xl bg-black/40 border border-white/[0.04] p-3 text-xs flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-zinc-300 text-[11px] leading-snug">
+                        <span className="text-emerald-400 font-bold">WHY IT MATTERS: </span>
+                        {whyAvoidMatters}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => toggleScience(rule.id)}
+                        className="shrink-0 ml-2 text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-0.5 px-2 py-0.5 rounded bg-white/[0.04]"
+                      >
+                        <span>Science</span>
+                        {expandedScience[rule.id] ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      </button>
+                    </div>
 
-                {/* Punchy 1-Line Badge + Science Toggle */}
-                <div className="mt-3 rounded-xl bg-black/40 border border-white/[0.04] p-3 text-xs flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-zinc-300 text-[11px] leading-snug">
-                      <span className="text-emerald-400 font-bold">WHY IT MATTERS: </span>
-                      {whyAvoidMatters}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => toggleScience(rule.id)}
-                      className="shrink-0 ml-2 text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-0.5 px-2 py-0.5 rounded bg-white/[0.04]"
-                    >
-                      <span>Science</span>
-                      {expandedScience[rule.id] ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    </button>
+                    {expandedScience[rule.id] && (
+                      <div className="pt-2 border-t border-white/[0.06] text-[11px] text-zinc-400 leading-relaxed animate-in fade-in duration-150">
+                        {rule.description}
+                      </div>
+                    )}
                   </div>
 
-                  {expandedScience[rule.id] && (
-                    <div className="pt-2 border-t border-white/[0.06] text-[11px] text-zinc-400 leading-relaxed animate-in fade-in duration-150">
-                      {rule.description}
-                    </div>
-                  )}
+                  {/* Anti-Cheat Press-and-Hold Oath Button (2.0s) */}
+                  <div className="mt-3.5">
+                    {isDone ? (
+                      <div className="w-full py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center gap-2 text-xs font-mono font-bold text-emerald-400 shadow-sm">
+                        <Check className="h-4 w-4 stroke-[3]" />
+                        <span>GUARDRAIL MAINTAINED (+50 XP)</span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onMouseDown={() => startGuardrailHold(rule.id)}
+                        onMouseUp={stopGuardrailHold}
+                        onMouseLeave={stopGuardrailHold}
+                        onTouchStart={() => startGuardrailHold(rule.id)}
+                        onTouchEnd={stopGuardrailHold}
+                        className="relative overflow-hidden w-full py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white font-extrabold text-xs select-none touch-none flex items-center justify-center gap-2 active:scale-98 transition shadow-sm"
+                      >
+                        {/* Animated Volt Green Fill Bar */}
+                        {isHoldingThis && (
+                          <div
+                            className="absolute inset-0 bg-[#A3E635]/35 transition-all duration-75"
+                            style={{ width: `${guardrailHoldProgress}%` }}
+                          />
+                        )}
+                        <Shield className="h-4 w-4 text-emerald-400 relative z-10" />
+                        <span className="relative z-10 font-mono tracking-wide">
+                          {isHoldingThis
+                            ? `HOLDING OATH... ${guardrailHoldProgress}%`
+                            : 'HOLD 2.0s TO SWEAR PROTOCOL (+50 XP)'}
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                {/* Anti-Cheat Press-and-Hold Oath Button (2.0s) */}
-                <div className="mt-3.5">
-                  {isDone ? (
-                    <div className="w-full py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center gap-2 text-xs font-mono font-bold text-emerald-400 shadow-sm">
-                      <Check className="h-4 w-4 stroke-[3]" />
-                      <span>GUARDRAIL MAINTAINED (+50 XP)</span>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onMouseDown={() => startGuardrailHold(rule.id)}
-                      onMouseUp={stopGuardrailHold}
-                      onMouseLeave={stopGuardrailHold}
-                      onTouchStart={() => startGuardrailHold(rule.id)}
-                      onTouchEnd={stopGuardrailHold}
-                      className="relative overflow-hidden w-full py-3 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white font-extrabold text-xs select-none touch-none flex items-center justify-center gap-2 active:scale-98 transition shadow-sm"
-                    >
-                      {/* Animated Volt Green Fill Bar */}
-                      {isHoldingThis && (
-                        <div
-                          className="absolute inset-0 bg-[#A3E635]/35 transition-all duration-75"
-                          style={{ width: `${guardrailHoldProgress}%` }}
-                        />
-                      )}
-                      <Shield className="h-4 w-4 text-emerald-400 relative z-10" />
-                      <span className="relative z-10 font-mono tracking-wide">
-                        {isHoldingThis
-                          ? `HOLDING OATH... ${guardrailHoldProgress}%`
-                          : 'HOLD 2.0s TO SWEAR PROTOCOL (+50 XP)'}
-                      </span>
-                    </button>
-                  )}
-                </div>
-              </div>
+              </ScrollReveal>
             );
           })}
         </div>

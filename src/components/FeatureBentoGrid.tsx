@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ScrollReveal } from './ScrollReveal';
 import {
   ShieldAlert,
   Zap,
@@ -58,9 +59,9 @@ export const FeatureBentoGrid: React.FC = () => {
   };
 
   return (
-    <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
+    <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12 overflow-hidden">
       {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
+      <ScrollReveal direction="up" distance={40} className="text-center max-w-3xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-semibold">
           <Activity className="h-3.5 w-3.5" />
           <span>ENGINE ARCHITECTURE</span>
@@ -74,12 +75,13 @@ export const FeatureBentoGrid: React.FC = () => {
         <p className="text-sm sm:text-base text-zinc-400">
           Every millisecond of your workout is evaluated by a client-side computer vision pipeline calibrated for elite kinetic compliance.
         </p>
-      </div>
+      </ScrollReveal>
 
       {/* Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* CARD 1: 33-Point 3D Skeletal Mesh (Col-Span 7) */}
-        <div className="md:col-span-7 rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300">
+        {/* CARD 1: 33-Point 3D Skeletal Mesh (Col-Span 7) - Floats in from Left */}
+        <ScrollReveal direction="left" distance={70} duration={0.75} className="md:col-span-7 flex">
+          <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="space-y-3 relative z-10">
@@ -158,9 +160,11 @@ export const FeatureBentoGrid: React.FC = () => {
             33 landmarks processed at 60Hz with zero video transmission to remote servers
           </div>
         </div>
+      </ScrollReveal>
 
-        {/* CARD 2: Anti-Cheat Rep Validation (Col-Span 5) */}
-        <div className="md:col-span-5 rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-cyan-500/40 transition-all duration-300">
+      {/* CARD 2: Anti-Cheat Rep Validation (Col-Span 5) - Floats in from Right */}
+      <ScrollReveal direction="right" distance={70} duration={0.75} delay={0.1} className="md:col-span-5 flex">
+        <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-cyan-500/40 transition-all duration-300">
           <div className="space-y-3">
             <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase font-bold flex items-center gap-1.5">
               <ShieldAlert className="h-3.5 w-3.5" /> REPUTATION INTEGRITY
@@ -238,9 +242,11 @@ export const FeatureBentoGrid: React.FC = () => {
             Enforces full concentric & eccentric ranges across 40+ athletic disciplines.
           </div>
         </div>
+      </ScrollReveal>
 
-        {/* CARD 3: Zero-Latency On-Device Edge AI (Col-Span 5) */}
-        <div className="md:col-span-5 rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300">
+      {/* CARD 3: Zero-Latency On-Device Edge AI (Col-Span 5) - Floats in from Left */}
+      <ScrollReveal direction="left" distance={70} duration={0.75} className="md:col-span-5 flex">
+        <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300">
           <div className="space-y-3">
             <span className="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-bold flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 fill-current" /> ZERO-LATENCY EDGE ENGINE
@@ -285,9 +291,11 @@ export const FeatureBentoGrid: React.FC = () => {
             Zero battery drain • Works in remote gyms with zero internet access
           </div>
         </div>
+      </ScrollReveal>
 
-        {/* CARD 4: Calisthenics & Strength Ready (Col-Span 7) */}
-        <div className="md:col-span-7 rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-cyan-500/40 transition-all duration-300">
+      {/* CARD 4: Calisthenics & Strength Ready (Col-Span 7) - Floats in from Right */}
+      <ScrollReveal direction="right" distance={70} duration={0.75} delay={0.1} className="md:col-span-7 flex">
+        <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-cyan-500/40 transition-all duration-300">
           <div className="space-y-3">
             <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase font-bold flex items-center gap-1.5">
               <Dumbbell className="h-3.5 w-3.5" /> 40+ SUPPORTED DISCIPLINES
@@ -348,6 +356,7 @@ export const FeatureBentoGrid: React.FC = () => {
             Instant voice cues keep your eyes locked on the exercise, not the screen.
           </div>
         </div>
+      </ScrollReveal>
       </div>
     </section>
   );

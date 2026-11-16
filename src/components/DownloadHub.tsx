@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ScrollReveal } from './ScrollReveal';
 import {
   Download,
   Smartphone,
@@ -20,9 +21,9 @@ interface DownloadHubProps {
 
 export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal }) => {
   return (
-    <section id="install-guide" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
+    <section id="install-guide" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 overflow-hidden">
       {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
+      <ScrollReveal direction="up" distance={40} className="text-center max-w-3xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold">
           <Download className="h-3.5 w-3.5" />
           <span>DIRECT INSTALLATION HUB</span>
@@ -36,13 +37,13 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
         <p className="text-sm sm:text-base text-zinc-400">
           Experience unthrottled 60 FPS hardware acceleration with direct developer access.
         </p>
-      </div>
+      </ScrollReveal>
 
       {/* Main Download & Stepper Card */}
       <div className="rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-10 relative overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Column: Direct Action & Metadata */}
-          <div className="lg:col-span-6 space-y-6">
+          {/* Left Column: Direct Action & Metadata (Floats in from Left) */}
+          <ScrollReveal direction="left" distance={60} duration={0.8} className="lg:col-span-6 space-y-6">
             <div className="space-y-2">
               <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider block">
                 Official Android APK Package
@@ -91,10 +92,10 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
                 </svg>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
-          {/* Right Column: 3-Step Visual Stepper */}
-          <div className="lg:col-span-6 space-y-4">
+          {/* Right Column: 3-Step Visual Stepper (Floats in from Right) */}
+          <ScrollReveal direction="right" distance={60} duration={0.8} delay={0.15} className="lg:col-span-6 space-y-4">
             <span className="text-xs font-mono text-zinc-400 uppercase font-bold tracking-wider block">
               3-Step Installation Protocol
             </span>
@@ -137,41 +138,47 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
                 </p>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
 
-      {/* Security Verification Panel */}
+      {/* Security Verification Panel (Floats in with Staggered Directions) */}
       <div id="security" className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-        <div className="p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
-          <div className="flex items-center gap-2 text-emerald-400 font-bold">
-            <ShieldCheck className="h-4 w-4" />
-            <span>0/72 VirusTotal Detections</span>
+        <ScrollReveal direction="left" distance={50} duration={0.7} className="flex">
+          <div className="w-full p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold">
+              <ShieldCheck className="h-4 w-4" />
+              <span>0/72 VirusTotal Detections</span>
+            </div>
+            <p className="text-zinc-400 text-[11px] leading-relaxed">
+              Every APK release undergoes automated SHA-256 static analysis against 72 antivirus engines. Zero malware, zero adware.
+            </p>
           </div>
-          <p className="text-zinc-400 text-[11px] leading-relaxed">
-            Every APK release undergoes automated SHA-256 static analysis against 72 antivirus engines. Zero malware, zero adware.
-          </p>
-        </div>
+        </ScrollReveal>
 
-        <div className="p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
-          <div className="flex items-center gap-2 text-cyan-400 font-bold">
-            <Lock className="h-4 w-4" />
-            <span>100% On-Device Privacy</span>
+        <ScrollReveal direction="up" distance={50} duration={0.7} delay={0.1} className="flex">
+          <div className="w-full p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
+            <div className="flex items-center gap-2 text-cyan-400 font-bold">
+              <Lock className="h-4 w-4" />
+              <span>100% On-Device Privacy</span>
+            </div>
+            <p className="text-zinc-400 text-[11px] leading-relaxed">
+              Your live camera frames never touch the cloud or remote servers. Computer vision processing executes exclusively inside device RAM.
+            </p>
           </div>
-          <p className="text-zinc-400 text-[11px] leading-relaxed">
-            Your live camera frames never touch the cloud or remote servers. Computer vision processing executes exclusively inside device RAM.
-          </p>
-        </div>
+        </ScrollReveal>
 
-        <div className="p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
-          <div className="flex items-center gap-2 text-emerald-400 font-bold">
-            <FileCheck className="h-4 w-4" />
-            <span>Offline Autonomy</span>
+        <ScrollReveal direction="right" distance={50} duration={0.7} delay={0.2} className="flex">
+          <div className="w-full p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold">
+              <FileCheck className="h-4 w-4" />
+              <span>Offline Autonomy</span>
+            </div>
+            <p className="text-zinc-400 text-[11px] leading-relaxed">
+              No active WiFi or LTE cellular connection required. Train in basement powerlifting gyms, parks, or off-grid shelters without interruption.
+            </p>
           </div>
-          <p className="text-zinc-400 text-[11px] leading-relaxed">
-            No active WiFi or LTE cellular connection required. Train in basement powerlifting gyms, parks, or off-grid shelters without interruption.
-          </p>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

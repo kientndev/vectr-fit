@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DailyProtocol, JointSoreness } from '../types/protocol';
+import { ScrollReveal } from './ScrollReveal';
 import {
   Activity,
   Zap,
@@ -210,103 +211,106 @@ export const MuscleRecoveryPanel: React.FC<MuscleRecoveryPanelProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 6-Zone Kinetic Telemetry Panel */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#121215] p-4 sm:p-5 space-y-4 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#A3E635]/15 border border-[#A3E635]/30 text-[#A3E635]">
-              <Activity className="h-4 w-4" />
+      {/* 6-Zone Kinetic Telemetry Panel (Floats in from Left) */}
+      <ScrollReveal direction="left" distance={40} duration={0.65}>
+        <div className="rounded-2xl border border-white/[0.08] bg-[#121215] p-4 sm:p-5 space-y-4 shadow-xl">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#A3E635]/15 border border-[#A3E635]/30 text-[#A3E635]">
+                <Activity className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-white tracking-tight">
+                  DYNAMIC MUSCLE RECOVERY TELEMETRY
+                </h3>
+                <p className="text-[10px] text-zinc-400 font-mono">
+                  {totalWorkoutSetsDone} Sets Verified Today · Real-Time Stimulus Modeling
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xs font-bold text-white tracking-tight">
-                DYNAMIC MUSCLE RECOVERY TELEMETRY
-              </h3>
-              <p className="text-[10px] text-zinc-400 font-mono">
-                {totalWorkoutSetsDone} Sets Verified Today · Real-Time Stimulus Modeling
-              </p>
-            </div>
+
+            <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2.5 py-0.5 text-[10px] font-mono font-bold text-zinc-300">
+              6-ZONE KINETICS
+            </span>
           </div>
 
-          <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2.5 py-0.5 text-[10px] font-mono font-bold text-zinc-300">
-            6-ZONE KINETICS
-          </span>
-        </div>
+          {/* 6 Muscle Groups Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            {groups.map((group, gIdx) => {
+              const isFatigued = group.category === 'FATIGUED';
+              const isLoaded = group.category === 'LOADED';
 
-        {/* 6 Muscle Groups Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-          {groups.map(group => {
-            const isFatigued = group.category === 'FATIGUED';
-            const isLoaded = group.category === 'LOADED';
-
-            return (
-              <div
-                key={group.name}
-                className={`rounded-xl border p-3 transition-all ${
-                  isFatigued
-                    ? 'border-rose-500/30 bg-rose-500/[0.05]'
-                    : isLoaded
-                    ? 'border-amber-400/30 bg-amber-400/[0.05]'
-                    : 'border-white/[0.06] bg-[#18181C]'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-200 truncate">
-                    {group.name}
-                  </span>
-                  <span
-                    className={`font-mono-numbers text-xs font-black ${
-                      isFatigued
-                        ? 'text-rose-400'
-                        : isLoaded
-                        ? 'text-amber-400'
-                        : 'text-[#A3E635]'
-                    }`}
-                  >
-                    {group.readiness}%
-                  </span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="mt-2 h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-700 ${
-                      isFatigued
-                        ? 'bg-rose-500'
-                        : isLoaded
-                        ? 'bg-amber-400'
-                        : 'bg-[#A3E635]'
-                    }`}
-                    style={{ width: `${group.readiness}%` }}
-                  />
-                </div>
-
-                <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
-                  <span
-                    className={`font-medium ${
-                      isFatigued
-                        ? 'text-rose-400'
-                        : isLoaded
-                        ? 'text-amber-300'
-                        : 'text-zinc-400'
-                    }`}
-                  >
-                    {group.statusLabel}
-                  </span>
-                  {group.setsDone > 0 && (
-                    <span className="text-zinc-500 font-bold">
-                      {group.setsDone}s
+              return (
+                <div
+                  key={group.name}
+                  className={`rounded-xl border p-3 transition-all ${
+                    isFatigued
+                      ? 'border-rose-500/30 bg-rose-500/[0.05]'
+                      : isLoaded
+                      ? 'border-amber-400/30 bg-amber-400/[0.05]'
+                      : 'border-white/[0.06] bg-[#18181C]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-zinc-200 truncate">
+                      {group.name}
                     </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                    <span
+                      className={`font-mono-numbers text-xs font-black ${
+                        isFatigued
+                          ? 'text-rose-400'
+                          : isLoaded
+                          ? 'text-amber-400'
+                          : 'text-[#A3E635]'
+                      }`}
+                    >
+                      {group.readiness}%
+                    </span>
+                  </div>
 
-      {/* Interactive 2-Min Mobility Flush & Decompression Card */}
-      <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#141418] to-[#0F0F12] p-4 sm:p-5 space-y-4 shadow-xl relative overflow-hidden">
+                  {/* Progress bar */}
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-zinc-800 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-700 ${
+                        isFatigued
+                          ? 'bg-rose-500'
+                          : isLoaded
+                          ? 'bg-amber-400'
+                          : 'bg-[#A3E635]'
+                      }`}
+                      style={{ width: `${group.readiness}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
+                    <span
+                      className={`font-medium ${
+                        isFatigued
+                          ? 'text-rose-400'
+                          : isLoaded
+                          ? 'text-amber-300'
+                          : 'text-zinc-400'
+                      }`}
+                    >
+                      {group.statusLabel}
+                    </span>
+                    {group.setsDone > 0 && (
+                      <span className="text-zinc-500 font-bold">
+                        {group.setsDone}s
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Interactive 2-Min Mobility Flush & Decompression Card (Floats in from Right) */}
+      <ScrollReveal direction="right" distance={40} duration={0.65} delay={0.1}>
+        <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#141418] to-[#0F0F12] p-4 sm:p-5 space-y-4 shadow-xl relative overflow-hidden">
         {/* Glow corner accent */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#A3E635]/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -439,6 +443,7 @@ export const MuscleRecoveryPanel: React.FC<MuscleRecoveryPanelProps> = ({
           )}
         </div>
       </div>
+      </ScrollReveal>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BiomechanicsArena } from './BiomechanicsArena';
+import { ScrollReveal } from './ScrollReveal';
 import {
   Download,
   ShieldCheck,
@@ -26,8 +27,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDownloadModal })
       <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        {/* Left Column: Value Prop, Headline & Conversion CTAs */}
-        <div className="lg:col-span-5 space-y-6 text-left">
+        {/* Left Column: Value Prop, Headline & Conversion CTAs (Floats in from Left) */}
+        <ScrollReveal direction="left" distance={60} duration={0.8} className="lg:col-span-5 space-y-6 text-left">
           {/* Animated Tech Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.15)]">
             <Zap className="h-3.5 w-3.5 fill-current animate-pulse" />
@@ -92,12 +93,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDownloadModal })
               </span>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
 
-        {/* Right Column: Embedded Biomechanics Arena */}
-        <div className="lg:col-span-7">
+        {/* Right Column: Embedded Biomechanics Arena (Floats in from Right) */}
+        <ScrollReveal direction="right" distance={60} duration={0.85} delay={0.15} className="lg:col-span-7">
           <BiomechanicsArena onOpenDownloadModal={onOpenDownloadModal} />
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );

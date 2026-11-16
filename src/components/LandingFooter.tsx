@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ScrollReveal } from './ScrollReveal';
 import { Activity, ShieldCheck, Download, Smartphone, Cpu, ExternalLink } from 'lucide-react';
 import { audioJuice } from '../lib/audioJuice';
 
@@ -11,11 +12,11 @@ interface LandingFooterProps {
 
 export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModal }) => {
   return (
-    <footer className="border-t border-white/[0.08] bg-[#05070B] text-zinc-400 font-mono text-xs">
+    <footer className="border-t border-white/[0.08] bg-[#05070B] text-zinc-400 font-mono text-xs overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Brand Info */}
-          <div className="md:col-span-5 space-y-4">
+          {/* Brand Info (Floats in from Left) */}
+          <ScrollReveal direction="left" distance={40} className="md:col-span-5 space-y-4">
             <Link
               href="/"
               onClick={() => audioJuice.playTick()}
@@ -37,10 +38,10 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
               <span>Production Version: v1.2.0-beta • APK Ready</span>
             </div>
-          </div>
+          </ScrollReveal>
 
-          {/* Nav Links */}
-          <div className="md:col-span-3 space-y-3">
+          {/* Nav Links (Floats in from Center/Up) */}
+          <ScrollReveal direction="up" distance={40} delay={0.1} className="md:col-span-3 space-y-3">
             <span className="text-white font-bold text-xs uppercase tracking-wider block">
               Navigation
             </span>
@@ -71,10 +72,10 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
                 </Link>
               </li>
             </ul>
-          </div>
+          </ScrollReveal>
 
-          {/* Quick Download CTA */}
-          <div className="md:col-span-4 space-y-3">
+          {/* Quick Download CTA (Floats in from Right) */}
+          <ScrollReveal direction="right" distance={40} delay={0.15} className="md:col-span-4 space-y-3">
             <span className="text-white font-bold text-xs uppercase tracking-wider block">
               Direct Binary Release
             </span>
@@ -92,11 +93,11 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
               <Download className="h-3.5 w-3.5" />
               <span>Download .APK (42MB)</span>
             </button>
-          </div>
+          </ScrollReveal>
         </div>
 
         {/* Bottom Credits & Legal */}
-        <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-600">
+        <ScrollReveal direction="up" distance={20} className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-600">
           <div>
             © {new Date().getFullYear()} VECTR FIT Biomechanics Inc. All rights reserved.
           </div>
@@ -107,7 +108,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
             <span>•</span>
             <span>Offline Android Runtime</span>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </footer>
   );

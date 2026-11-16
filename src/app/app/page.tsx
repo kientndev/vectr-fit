@@ -29,6 +29,7 @@ import { CritiqueStatCard } from '../../components/CritiqueStatCard';
 import { LeaderboardModal, LeaderboardAthlete } from '../../components/LeaderboardModal';
 import { CritiqueRatingModal } from '../../components/CritiqueRatingModal';
 import { FuelAndRulesProtocol } from '../../components/FuelAndRulesProtocol';
+import { ScrollReveal } from '../../components/ScrollReveal';
 import { feedback } from '../../lib/feedback';
 import { Check, Plus, Droplet, Sparkles, Zap, Shield, Heart, Sun, Dumbbell, Moon, Trophy } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
@@ -1081,20 +1082,22 @@ export default function Home() {
       />
 
       {/* Main SaaS Workspace Container with Safe-Area bottom padding */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-5 sm:px-6 pb-28 space-y-5">
-        {/* Dynamic Athlete Status Stat Card (LVL 1 to 10 progression) */}
-        <CritiqueStatCard
-          tier={protocol.tier}
-          currentXp={userXp}
-          streakCount={streakCount}
-          overallScore={athleteStats.overallScore}
-          strength={athleteStats.strength}
-          discipline={disciplineScore}
-          formScore={athleteStats.postureSymmetry}
-          recoveryScore={athleteStats.cnsRecovery}
-          onOpenScanner={() => handleOpenFormCamera('Standard Push-up', 'FORM')}
-          onOpenRatingModal={() => setIsRatingModalOpen(true)}
-        />
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-5 sm:px-6 pb-28 space-y-5 overflow-x-hidden">
+        {/* Dynamic Athlete Status Stat Card (LVL 1 to 10 progression) - Floats in from Top */}
+        <ScrollReveal direction="down" distance={30} duration={0.65}>
+          <CritiqueStatCard
+            tier={protocol.tier}
+            currentXp={userXp}
+            streakCount={streakCount}
+            overallScore={athleteStats.overallScore}
+            strength={athleteStats.strength}
+            discipline={disciplineScore}
+            formScore={athleteStats.postureSymmetry}
+            recoveryScore={athleteStats.cnsRecovery}
+            onOpenScanner={() => handleOpenFormCamera('Standard Push-up', 'FORM')}
+            onOpenRatingModal={() => setIsRatingModalOpen(true)}
+          />
+        </ScrollReveal>
 
         {/* ========================================================= */}
         {/* TAB 1: WORKOUT (DO Session + Spotlight + Live Controller) */}
@@ -1132,22 +1135,24 @@ export default function Home() {
         {/* ========================================================= */}
         {activeTab === 'checkin' && (
           <div className="max-w-xl mx-auto space-y-4">
-            <div className="pb-1">
+            <ScrollReveal direction="left" distance={30} className="pb-1">
               <h2 className="text-base font-bold text-white tracking-tight">
                 Daily Calibration & Guardrails
               </h2>
               <p className="text-xs text-zinc-400">
                 Configure training modality, tier benchmark, energy level, and joint protection.
               </p>
-            </div>
+            </ScrollReveal>
 
-            <CalibrationPanel
-              state={calibration}
-              onChange={handleCalibrationChange}
-              onGenerate={handleManualGenerate}
-              isGenerating={isGenerating}
-              onOpenOnboarding={() => setIsOnboardingOpen(true)}
-            />
+            <ScrollReveal direction="right" distance={40} duration={0.7}>
+              <CalibrationPanel
+                state={calibration}
+                onChange={handleCalibrationChange}
+                onGenerate={handleManualGenerate}
+                isGenerating={isGenerating}
+                onOpenOnboarding={() => setIsOnboardingOpen(true)}
+              />
+            </ScrollReveal>
           </div>
         )}
 
@@ -1174,27 +1179,31 @@ export default function Home() {
         {/* ========================================================= */}
         {activeTab === 'recovery' && (
           <div className="space-y-6">
-            <div className="pb-1">
+            <ScrollReveal direction="left" distance={30} className="pb-1">
               <h2 className="text-base font-bold text-white tracking-tight">
                 Biomechanical Readiness & History
               </h2>
               <p className="text-xs text-zinc-400">
                 6-zone kinetic fatigue modeling, CNS readiness, and 7-day consistency tracking.
               </p>
-            </div>
+            </ScrollReveal>
 
-            <MuscleRecoveryPanel
-              protocol={protocol}
-              completedSets={completedSets}
-              soreJoints={calibration.soreJoints}
-              energy={calibration.energy}
-              onAwardXp={awardXp}
-            />
+            <ScrollReveal direction="left" distance={45} duration={0.7}>
+              <MuscleRecoveryPanel
+                protocol={protocol}
+                completedSets={completedSets}
+                soreJoints={calibration.soreJoints}
+                energy={calibration.energy}
+                onAwardXp={awardXp}
+              />
+            </ScrollReveal>
 
-            <ProHistoryStrip
-              history={completedWorkouts}
-              streakCount={streakCount}
-            />
+            <ScrollReveal direction="right" distance={45} duration={0.7} delay={0.1}>
+              <ProHistoryStrip
+                history={completedWorkouts}
+                streakCount={streakCount}
+              />
+            </ScrollReveal>
           </div>
         )}
       </main>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { DailyProtocol, Exercise } from '../types/protocol';
 import { CoachCommandBar } from './CoachCommandBar';
 import { ActiveSetPlayer } from './ActiveSetPlayer';
+import { ScrollReveal } from './ScrollReveal';
 import {
   Brain,
   Shield,
@@ -271,15 +272,15 @@ ${protocol.blocks
         <div className="space-y-2">
           {protocol.blocks.map((block, bIdx) => (
             <div key={bIdx} className="space-y-1.5">
-              {/* Clean Vertical Stack Block Divider */}
-              <div className="pt-3 pb-1.5 flex flex-col gap-0.5 px-1">
+              {/* Clean Vertical Stack Block Divider (Floats in from Left) */}
+              <ScrollReveal direction="left" distance={30} duration={0.5} className="pt-3 pb-1.5 flex flex-col gap-0.5 px-1">
                 <span className="text-xs font-mono font-bold tracking-wider uppercase text-zinc-300">
                   {block.title}
                 </span>
                 <span className="text-[11px] font-mono text-zinc-500">
                   {block.subtitle}
                 </span>
-              </div>
+              </ScrollReveal>
 
               {/* Rows */}
               {block.exercises.map((exercise, eIdx) => {
@@ -290,16 +291,22 @@ ${protocol.blocks
                 ).length;
 
                 return (
-                  <div
+                  <ScrollReveal
                     key={exercise.id}
-                    className={`relative rounded-2xl border p-4 transition-all flex flex-col gap-3 ${
-                      isActive
-                        ? 'border-[#A3E635] bg-[#141812] shadow-[0_0_15px_rgba(163,230,53,0.15)] ring-1 ring-[#A3E635]/30'
-                        : isDone
-                        ? 'border-emerald-500/30 bg-[#0e1410] opacity-80'
-                        : 'border-white/[0.06] bg-[#121215]'
-                    }`}
+                    direction={eIdx % 2 === 0 ? 'left' : 'right'}
+                    distance={45}
+                    duration={0.65}
+                    delay={0.05 * eIdx}
                   >
+                    <div
+                      className={`relative rounded-2xl border p-4 transition-all flex flex-col gap-3 ${
+                        isActive
+                          ? 'border-[#A3E635] bg-[#141812] shadow-[0_0_15px_rgba(163,230,53,0.15)] ring-1 ring-[#A3E635]/30'
+                          : isDone
+                          ? 'border-emerald-500/30 bg-[#0e1410] opacity-80'
+                          : 'border-white/[0.06] bg-[#121215]'
+                      }`}
+                    >
                     {/* Row 1 (Header): 01 Badge + Full Exercise Name (NO truncation) + Set Counter Pill */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -434,6 +441,7 @@ ${protocol.blocks
                       </div>
                     )}
                   </div>
+                </ScrollReveal>
                 );
               })}
             </div>
