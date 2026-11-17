@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 
 export type RevealDirection =
   | 'left'
@@ -31,15 +31,15 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   children,
   direction = 'up',
   delay = 0,
-  duration = 0.8,
-  distance = 90,
+  duration = 0.75,
+  distance = 85,
   tilt = true,
   scale = true,
   blur = true,
   glowOnEnter = false,
   className = '',
-  viewportAmount = 0.1,
-  once = true,
+  viewportAmount = 0.12,
+  once = false, // Bidirectional: floats in when scrolling in, floats out when scrolling out
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [hasSettled, setHasSettled] = useState(false);
@@ -68,7 +68,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       case 'converge-left':
         return {
           x: -distance,
-          y: 15, // Slide + Float up simultaneously
+          y: 8,
           rotate: tilt ? -2.5 : 0,
           scale: baseScale,
         };
@@ -76,7 +76,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
       case 'converge-right':
         return {
           x: distance,
-          y: 15,
+          y: 8,
           rotate: tilt ? 2.5 : 0,
           scale: baseScale,
         };
@@ -99,37 +99,53 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     }
   };
 
-  const initial = {
-    opacity: 0,
-    filter: blur ? 'blur(8px)' : 'none',
-    ...getInitialPosition(),
+  const variants: Variants = {
+    hidden: {
+      opacity: 0,
+      filter: blur ? 'blur(8px)' : 'none',
+      ...getInitialPosition(),
+      transition: {
+        type: 'spring' as const,
+        damping: 24,
+        stiffness: 110,
+        mass: 0.6,
+      },
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      rotate: 0,
+      scale: 1,
+      filter: 'blur(0px)',
+      transition: {
+        type: 'spring' as const,
+        damping: 20,
+        stiffness: 85,
+        mass: 0.8,
+        delay,
+        duration: duration || 0.75,
+      },
+    },
   };
 
   return (
     <motion.div
-      initial={initial}
-      whileInView={{
-        opacity: 1,
-        x: 0,
-        y: 0,
-        rotate: 0,
-        scale: 1,
-        filter: 'blur(0px)',
-      }}
+      initial="hidden"
+      whileInView="visible"
       viewport={{
         once,
         amount: viewportAmount,
-        margin: '0px 0px -40px 0px',
+        margin: '-30px 0px -30px 0px',
       }}
-      transition={{
-        type: 'spring',
-        damping: 18,
-        stiffness: 90,
-        mass: 0.85,
-        delay,
-        duration: duration || 0.8,
+      variants={variants}
+      onAnimationComplete={(definition) => {
+        if (definition === 'visible') {
+          setHasSettled(true);
+        } else {
+          setHasSettled(false);
+        }
       }}
-      onAnimationComplete={() => setHasSettled(true)}
       suppressHydrationWarning
       className={`relative ${className} [will-change:transform,opacity,filter] [transform-style:preserve-3d] ${
         glowOnEnter && hasSettled ? 'juicy-settled-glow' : ''
@@ -158,6 +174,7 @@ export const JuicyConvergeRow: React.FC<{
   leftClassName?: string;
   rightClassName?: string;
   delay?: number;
+  once?: boolean;
 }> = ({
   left,
   right,
@@ -165,14 +182,16 @@ export const JuicyConvergeRow: React.FC<{
   leftClassName = '',
   rightClassName = '',
   delay = 0,
+  once = false,
 }) => {
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 items-center ${className}`}>
       <ScrollReveal
         direction="converge-left"
-        distance={110}
+        distance={100}
         delay={delay}
         glowOnEnter
+        once={once}
         className={`lg:col-span-6 ${leftClassName}`}
       >
         {left}
@@ -180,9 +199,10 @@ export const JuicyConvergeRow: React.FC<{
 
       <ScrollReveal
         direction="converge-right"
-        distance={110}
+        distance={100}
         delay={delay + 0.12}
         glowOnEnter
+        once={once}
         className={`lg:col-span-6 ${rightClassName}`}
       >
         {right}

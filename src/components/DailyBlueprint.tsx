@@ -176,104 +176,126 @@ ${protocol.blocks
         </div>
       )}
 
-      {/* 1. COLLAPSIBLE AI COACH & ADJUSTMENTS DRAWER */}
-      <div className="rounded-xl border border-white/[0.07] bg-[#121215] overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setShowCoachDrawer(!showCoachDrawer)}
-          className="w-full flex items-center justify-between p-3 sm:px-4 bg-white/[0.02] hover:bg-white/[0.05] transition text-left"
-        >
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#A3E635]" />
-            <span className="text-xs font-bold text-white tracking-wide">
-              AI Coach & Adjustments
-            </span>
-            <span className="text-[10px] font-mono text-zinc-500 hidden xs:inline">
-              ({protocol.persona === 'TACTICAL_SCIENTIST' ? 'Tactical Scientist' : 'Drill Sergeant'})
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-mono">
-            <span className="text-[11px]">{showCoachDrawer ? 'Hide' : 'Directives'}</span>
-            {showCoachDrawer ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </div>
-        </button>
+      {/* 1. COLLAPSIBLE AI COACH & ADJUSTMENTS DRAWER (Slides & Floats from Right to Center) */}
+      <ScrollReveal
+        direction="converge-right"
+        distance={80}
+        duration={0.75}
+        tilt={true}
+        scale={true}
+        blur={true}
+        glowOnEnter={true}
+      >
+        <div className="rounded-xl border border-white/[0.07] bg-[#121215] overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowCoachDrawer(!showCoachDrawer)}
+            className="w-full flex items-center justify-between p-3 sm:px-4 bg-white/[0.02] hover:bg-white/[0.05] transition text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#A3E635]" />
+              <span className="text-xs font-bold text-white tracking-wide">
+                AI Coach & Adjustments
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500 hidden xs:inline">
+                ({protocol.persona === 'TACTICAL_SCIENTIST' ? 'Tactical Scientist' : 'Drill Sergeant'})
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-mono">
+              <span className="text-[11px]">{showCoachDrawer ? 'Hide' : 'Directives'}</span>
+              {showCoachDrawer ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </div>
+          </button>
 
-        {showCoachDrawer && (
-          <div className="p-4 border-t border-white/[0.06] space-y-3.5 bg-black/20">
-            {/* Coach Directive Quote */}
-            {protocol.coachDirective?.quote && (
-              <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 text-xs text-zinc-300 leading-relaxed">
-                <span className="font-mono text-[10px] text-[#A3E635] uppercase font-bold block mb-1">
-                  Tactical Directive
-                </span>
-                "{protocol.coachDirective.quote.replace(/^"|"$/g, '')}"
-              </div>
-            )}
+          {showCoachDrawer && (
+            <div className="p-4 border-t border-white/[0.06] space-y-3.5 bg-black/20">
+              {/* Coach Directive Quote */}
+              {protocol.coachDirective?.quote && (
+                <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 text-xs text-zinc-300 leading-relaxed">
+                  <span className="font-mono text-[10px] text-[#A3E635] uppercase font-bold block mb-1">
+                    Tactical Directive
+                  </span>
+                  "{protocol.coachDirective.quote.replace(/^"|"$/g, '')}"
+                </div>
+              )}
 
-            {/* AI Coach Command Bar */}
-            <CoachCommandBar
-              onSendCommand={onSendCommand}
-              isLoading={isCommandLoading}
-              onResetToBaseline={onResetToBaseline}
-            />
-          </div>
-        )}
-      </div>
+              {/* AI Coach Command Bar */}
+              <CoachCommandBar
+                onSendCommand={onSendCommand}
+                isLoading={isCommandLoading}
+                onResetToBaseline={onResetToBaseline}
+              />
+            </div>
+          )}
+        </div>
+      </ScrollReveal>
 
       {/* ========================================================= */}
       {/* 2. MISSION QUEUE (COMPACT STREAMLINED EXERCISE LIST)      */}
       {/* ========================================================= */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#A3E635]" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
-              Tactical Mission Queue
-            </h3>
-          </div>
+        <ScrollReveal
+          direction="converge-left"
+          distance={70}
+          duration={0.7}
+          tilt={true}
+        >
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#A3E635]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+                Tactical Mission Queue
+              </h3>
+            </div>
 
-          <div className="flex items-center gap-2.5 font-mono text-xs">
-            {onOpenFormCamera && (
+            <div className="flex items-center gap-2.5 font-mono text-xs">
+              {onOpenFormCamera && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onOpenFormCamera(
+                      allExercises[0]?.name || 'Movement',
+                      'FORM',
+                      allExercises[0] ? `${allExercises[0].sets} × ${allExercises[0].repsOrHold}` : undefined,
+                      allExercises[0]?.formCue
+                    )
+                  }
+                  className="flex items-center gap-1.5 rounded-lg bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 px-2.5 py-1 text-xs font-bold text-[#A3E635] active:scale-95 transition"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  <span>AI Scan</span>
+                </button>
+              )}
+              <span className="text-zinc-400">
+                {completedSetsCount} / {totalSetsCount} Sets Verified
+              </span>
               <button
                 type="button"
-                onClick={() =>
-                  onOpenFormCamera(
-                    allExercises[0]?.name || 'Movement',
-                    'FORM',
-                    allExercises[0] ? `${allExercises[0].sets} × ${allExercises[0].repsOrHold}` : undefined,
-                    allExercises[0]?.formCue
-                  )
-                }
-                className="flex items-center gap-1.5 rounded-lg bg-[#A3E635]/15 hover:bg-[#A3E635]/25 border border-[#A3E635]/30 px-2.5 py-1 text-xs font-bold text-[#A3E635] active:scale-95 transition"
+                onClick={onResetSession}
+                title="Reset today's checks"
+                className="text-zinc-500 hover:text-zinc-300 transition px-1"
               >
-                <Camera className="h-3.5 w-3.5" />
-                <span>AI Scan</span>
+                Reset
               </button>
-            )}
-            <span className="text-zinc-400">
-              {completedSetsCount} / {totalSetsCount} Sets Verified
-            </span>
-            <button
-              type="button"
-              onClick={onResetSession}
-              title="Reset today's checks"
-              className="text-zinc-500 hover:text-zinc-300 transition px-1"
-            >
-              Reset
-            </button>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         {/* Mission Queue Rows */}
         <div className="space-y-2">
           {protocol.blocks.map((block, bIdx) => (
             <div key={bIdx} className="space-y-1.5">
-              {/* Clean Vertical Stack Block Divider (Floats in from Left) */}
-              <ScrollReveal direction="left" distance={30} duration={0.5} className="pt-3 pb-1.5 flex flex-col gap-0.5 px-1">
+              {/* Clean Vertical Stack Block Divider (Alternates Left and Right) */}
+              <ScrollReveal
+                direction={bIdx % 2 === 0 ? 'converge-left' : 'converge-right'}
+                distance={60}
+                duration={0.6}
+                className="pt-3 pb-1.5 flex flex-col gap-0.5 px-1"
+              >
                 <span className="text-xs font-mono font-bold tracking-wider uppercase text-zinc-300">
                   {block.title}
                 </span>

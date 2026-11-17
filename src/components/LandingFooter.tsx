@@ -15,8 +15,14 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
     <footer className="border-t border-white/[0.08] bg-[#05070B] text-zinc-400 font-mono text-xs overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Brand Info (Floats in from Left) */}
-          <ScrollReveal direction="left" distance={40} className="md:col-span-5 space-y-4">
+          {/* Brand Info (Slides & Floats in from Left) */}
+          <ScrollReveal
+            direction="converge-left"
+            distance={80}
+            duration={0.75}
+            tilt={true}
+            className="md:col-span-5 space-y-4"
+          >
             <Link
               href="/"
               onClick={() => audioJuice.playTick()}
@@ -41,7 +47,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
           </ScrollReveal>
 
           {/* Nav Links (Floats in from Center/Up) */}
-          <ScrollReveal direction="up" distance={40} delay={0.1} className="md:col-span-3 space-y-3">
+          <ScrollReveal direction="up" distance={50} delay={0.1} className="md:col-span-3 space-y-3">
             <span className="text-white font-bold text-xs uppercase tracking-wider block">
               Navigation
             </span>
@@ -74,8 +80,15 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
             </ul>
           </ScrollReveal>
 
-          {/* Quick Download CTA (Floats in from Right) */}
-          <ScrollReveal direction="right" distance={40} delay={0.15} className="md:col-span-4 space-y-3">
+          {/* Quick Download CTA (Slides & Floats in from Right) */}
+          <ScrollReveal
+            direction="converge-right"
+            distance={80}
+            delay={0.15}
+            duration={0.75}
+            tilt={true}
+            className="md:col-span-4 space-y-3"
+          >
             <span className="text-white font-bold text-xs uppercase tracking-wider block">
               Direct Binary Release
             </span>
