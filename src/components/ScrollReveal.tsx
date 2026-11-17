@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export type RevealDirection =
   | 'left'
@@ -41,11 +41,23 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   viewportAmount = 0.1,
   once = true,
 }) => {
-  const shouldReduceMotion = useReducedMotion();
+  const [isMounted, setIsMounted] = useState(false);
   const [hasSettled, setHasSettled] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className={`relative ${className}`} suppressHydrationWarning>
+        {children}
+      </div>
+    );
+  }
+
   const getInitialPosition = () => {
-    if (shouldReduceMotion || direction === 'none') {
+    if (direction === 'none') {
       return { x: 0, y: 0, rotate: 0, scale: 1 };
     }
 
@@ -89,7 +101,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
 
   const initial = {
     opacity: 0,
-    filter: blur && !shouldReduceMotion ? 'blur(8px)' : 'none',
+    filter: blur ? 'blur(8px)' : 'none',
     ...getInitialPosition(),
   };
 
@@ -118,11 +130,10 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
         duration: duration || 0.8,
       }}
       onAnimationComplete={() => setHasSettled(true)}
-      className={`relative ${className} ${glowOnEnter && hasSettled ? 'juicy-settled-glow' : ''}`}
-      style={{
-        willChange: 'transform, opacity, filter',
-        transformStyle: 'preserve-3d',
-      }}
+      suppressHydrationWarning
+      className={`relative ${className} [will-change:transform,opacity,filter] [transform-style:preserve-3d] ${
+        glowOnEnter && hasSettled ? 'juicy-settled-glow' : ''
+      }`}
     >
       {/* Juicy Ambient Kinetic Glint Highlight on entry */}
       {glowOnEnter && (
