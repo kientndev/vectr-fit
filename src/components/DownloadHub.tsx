@@ -42,8 +42,17 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
       {/* Main Download & Stepper Card */}
       <div className="rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-10 relative overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Column: Direct Action & Metadata (Floats in from Left) */}
-          <ScrollReveal direction="left" distance={60} duration={0.8} className="lg:col-span-6 space-y-6">
+          {/* Left Column: Direct Action & Metadata (Slides & Floats from Left to Center) */}
+          <ScrollReveal
+            direction="converge-left"
+            distance={110}
+            duration={0.85}
+            tilt={true}
+            scale={true}
+            blur={true}
+            glowOnEnter={true}
+            className="lg:col-span-6 space-y-6"
+          >
             <div className="space-y-2">
               <span className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider block">
                 Official Android APK Package
@@ -94,8 +103,18 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
             </div>
           </ScrollReveal>
 
-          {/* Right Column: 3-Step Visual Stepper (Floats in from Right) */}
-          <ScrollReveal direction="right" distance={60} duration={0.8} delay={0.15} className="lg:col-span-6 space-y-4">
+          {/* Right Column: 3-Step Visual Stepper (Slides & Floats from Right to Center) */}
+          <ScrollReveal
+            direction="converge-right"
+            distance={110}
+            duration={0.85}
+            delay={0.15}
+            tilt={true}
+            scale={true}
+            blur={true}
+            glowOnEnter={true}
+            className="lg:col-span-6 space-y-4"
+          >
             <span className="text-xs font-mono text-zinc-400 uppercase font-bold tracking-wider block">
               3-Step Installation Protocol
             </span>

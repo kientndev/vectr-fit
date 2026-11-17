@@ -211,8 +211,16 @@ export const MuscleRecoveryPanel: React.FC<MuscleRecoveryPanelProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* 6-Zone Kinetic Telemetry Panel (Floats in from Left) */}
-      <ScrollReveal direction="left" distance={40} duration={0.65}>
+      {/* 6-Zone Kinetic Telemetry Panel (Slides & Floats from Left to Center) */}
+      <ScrollReveal
+        direction="converge-left"
+        distance={100}
+        duration={0.8}
+        tilt={true}
+        scale={true}
+        blur={true}
+        glowOnEnter={true}
+      >
         <div className="rounded-2xl border border-white/[0.08] bg-[#121215] p-4 sm:p-5 space-y-4 shadow-xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
@@ -308,8 +316,17 @@ export const MuscleRecoveryPanel: React.FC<MuscleRecoveryPanelProps> = ({
         </div>
       </ScrollReveal>
 
-      {/* Interactive 2-Min Mobility Flush & Decompression Card (Floats in from Right) */}
-      <ScrollReveal direction="right" distance={40} duration={0.65} delay={0.1}>
+      {/* Interactive 2-Min Mobility Flush & Decompression Card (Slides & Floats from Right to Center) */}
+      <ScrollReveal
+        direction="converge-right"
+        distance={100}
+        duration={0.8}
+        delay={0.12}
+        tilt={true}
+        scale={true}
+        blur={true}
+        glowOnEnter={true}
+      >
         <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#141418] to-[#0F0F12] p-4 sm:p-5 space-y-4 shadow-xl relative overflow-hidden">
         {/* Glow corner accent */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#A3E635]/10 rounded-full blur-2xl pointer-events-none" />

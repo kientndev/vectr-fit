@@ -296,7 +296,15 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
       {/* 60s CAMERA LOCK-IN CHALLENGE BANNER                       */}
       {/* ========================================================= */}
       {onOpenChallengeCam && (
-        <ScrollReveal direction="left" distance={40} duration={0.65}>
+        <ScrollReveal
+          direction="converge-left"
+          distance={95}
+          duration={0.8}
+          tilt={true}
+          scale={true}
+          blur={true}
+          glowOnEnter={true}
+        >
           <div className="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/[0.08] to-amber-500/[0.02] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400 text-black font-extrabold text-sm shadow-[0_0_15px_rgba(251,191,36,0.4)]">
@@ -347,8 +355,16 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
           </span>
         </ScrollReveal>
 
-        {/* 1. INTERACTIVE HYDRATION CARD (Floats in from Right) */}
-        <ScrollReveal direction="right" distance={45} duration={0.7}>
+        {/* 1. INTERACTIVE HYDRATION CARD (Slides & Floats from Right to Center) */}
+        <ScrollReveal
+          direction="converge-right"
+          distance={95}
+          duration={0.8}
+          tilt={true}
+          scale={true}
+          blur={true}
+          glowOnEnter={true}
+        >
           <div
             className={`rounded-2xl border p-4 transition-all ${
               isHydrationComplete
@@ -491,10 +507,14 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
           return (
             <ScrollReveal
               key={target.id}
-              direction={idx % 2 === 0 ? 'left' : 'right'}
-              distance={40}
-              duration={0.65}
+              direction={idx % 2 === 0 ? 'converge-left' : 'converge-right'}
+              distance={90}
+              duration={0.75}
               delay={0.06 * idx}
+              tilt={true}
+              scale={true}
+              blur={true}
+              glowOnEnter={true}
             >
               <div
                 className={`rounded-2xl border p-4 transition-all ${
@@ -632,10 +652,14 @@ export const FuelAndRulesProtocol: React.FC<FuelAndRulesProtocolProps> = ({
             return (
               <ScrollReveal
                 key={rule.id}
-                direction={idx % 2 === 0 ? 'left' : 'right'}
-                distance={40}
-                duration={0.65}
+                direction={idx % 2 === 0 ? 'converge-left' : 'converge-right'}
+                distance={90}
+                duration={0.75}
                 delay={0.06 * idx}
+                tilt={true}
+                scale={true}
+                blur={true}
+                glowOnEnter={true}
               >
                 <div
                   className={`rounded-2xl border p-4 transition-all ${

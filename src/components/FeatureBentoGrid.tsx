@@ -79,8 +79,17 @@ export const FeatureBentoGrid: React.FC = () => {
 
       {/* Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* CARD 1: 33-Point 3D Skeletal Mesh (Col-Span 7) - Floats in from Left */}
-        <ScrollReveal direction="left" distance={70} duration={0.75} className="md:col-span-7 flex">
+        {/* CARD 1: 33-Point 3D Skeletal Mesh (Col-Span 7) - Slides & Floats from Left to Center */}
+        <ScrollReveal
+          direction="converge-left"
+          distance={110}
+          duration={0.85}
+          tilt={true}
+          scale={true}
+          blur={true}
+          glowOnEnter={true}
+          className="md:col-span-7 flex"
+        >
           <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -162,8 +171,18 @@ export const FeatureBentoGrid: React.FC = () => {
         </div>
       </ScrollReveal>
 
-      {/* CARD 2: Anti-Cheat Rep Validation (Col-Span 5) - Floats in from Right */}
-      <ScrollReveal direction="right" distance={70} duration={0.75} delay={0.1} className="md:col-span-5 flex">
+      {/* CARD 2: Anti-Cheat Rep Validation (Col-Span 5) - Slides & Floats from Right to Center */}
+      <ScrollReveal
+        direction="converge-right"
+        distance={110}
+        duration={0.85}
+        delay={0.1}
+        tilt={true}
+        scale={true}
+        blur={true}
+        glowOnEnter={true}
+        className="md:col-span-5 flex"
+      >
         <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-cyan-500/40 transition-all duration-300">
           <div className="space-y-3">
             <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase font-bold flex items-center gap-1.5">
@@ -244,8 +263,17 @@ export const FeatureBentoGrid: React.FC = () => {
         </div>
       </ScrollReveal>
 
-      {/* CARD 3: Zero-Latency On-Device Edge AI (Col-Span 5) - Floats in from Left */}
-      <ScrollReveal direction="left" distance={70} duration={0.75} className="md:col-span-5 flex">
+      {/* CARD 3: Zero-Latency On-Device Edge AI (Col-Span 5) - Slides & Floats from Left to Center */}
+      <ScrollReveal
+        direction="converge-left"
+        distance={110}
+        duration={0.85}
+        tilt={true}
+        scale={true}
+        blur={true}
+        glowOnEnter={true}
+        className="md:col-span-5 flex"
+      >
         <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-emerald-500/40 transition-all duration-300">
           <div className="space-y-3">
             <span className="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-bold flex items-center gap-1.5">
@@ -293,8 +321,18 @@ export const FeatureBentoGrid: React.FC = () => {
         </div>
       </ScrollReveal>
 
-      {/* CARD 4: Calisthenics & Strength Ready (Col-Span 7) - Floats in from Right */}
-      <ScrollReveal direction="right" distance={70} duration={0.75} delay={0.1} className="md:col-span-7 flex">
+      {/* CARD 4: Calisthenics & Strength Ready (Col-Span 7) - Slides & Floats from Right to Center */}
+      <ScrollReveal
+        direction="converge-right"
+        distance={110}
+        duration={0.85}
+        delay={0.1}
+        tilt={true}
+        scale={true}
+        blur={true}
+        glowOnEnter={true}
+        className="md:col-span-7 flex"
+      >
         <div className="w-full rounded-3xl bg-[#090C15] border border-white/[0.08] p-6 sm:p-8 flex flex-col justify-between group hover:border-cyan-500/40 transition-all duration-300">
           <div className="space-y-3">
             <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase font-bold flex items-center gap-1.5">

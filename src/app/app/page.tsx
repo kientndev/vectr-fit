@@ -1144,7 +1144,15 @@ export default function Home() {
               </p>
             </ScrollReveal>
 
-            <ScrollReveal direction="right" distance={40} duration={0.7}>
+            <ScrollReveal
+              direction="converge-right"
+              distance={90}
+              duration={0.75}
+              tilt={true}
+              scale={true}
+              blur={true}
+              glowOnEnter={true}
+            >
               <CalibrationPanel
                 state={calibration}
                 onChange={handleCalibrationChange}
@@ -1188,7 +1196,15 @@ export default function Home() {
               </p>
             </ScrollReveal>
 
-            <ScrollReveal direction="left" distance={45} duration={0.7}>
+            <ScrollReveal
+              direction="converge-left"
+              distance={90}
+              duration={0.75}
+              tilt={true}
+              scale={true}
+              blur={true}
+              glowOnEnter={true}
+            >
               <MuscleRecoveryPanel
                 protocol={protocol}
                 completedSets={completedSets}
@@ -1198,7 +1214,16 @@ export default function Home() {
               />
             </ScrollReveal>
 
-            <ScrollReveal direction="right" distance={45} duration={0.7} delay={0.1}>
+            <ScrollReveal
+              direction="converge-right"
+              distance={90}
+              duration={0.75}
+              delay={0.1}
+              tilt={true}
+              scale={true}
+              blur={true}
+              glowOnEnter={true}
+            >
               <ProHistoryStrip
                 history={completedWorkouts}
                 streakCount={streakCount}

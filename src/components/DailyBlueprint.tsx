@@ -293,10 +293,14 @@ ${protocol.blocks
                 return (
                   <ScrollReveal
                     key={exercise.id}
-                    direction={eIdx % 2 === 0 ? 'left' : 'right'}
-                    distance={45}
-                    duration={0.65}
-                    delay={0.05 * eIdx}
+                    direction={eIdx % 2 === 0 ? 'converge-left' : 'converge-right'}
+                    distance={95}
+                    duration={0.75}
+                    delay={0.06 * eIdx}
+                    tilt={true}
+                    scale={true}
+                    blur={true}
+                    glowOnEnter={true}
                   >
                     <div
                       className={`relative rounded-2xl border p-4 transition-all flex flex-col gap-3 ${
