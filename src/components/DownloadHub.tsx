@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollReveal } from './ScrollReveal';
 import {
   Download,
@@ -12,14 +12,31 @@ import {
   FileCheck,
   ChevronRight,
   Sparkles,
+  Apple,
+  ExternalLink,
 } from 'lucide-react';
 import { audioJuice } from '../lib/audioJuice';
 
 interface DownloadHubProps {
   onOpenDownloadModal: () => void;
+  onOpenIosModal?: () => void;
 }
 
-export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal }) => {
+export const DownloadHub: React.FC<DownloadHubProps> = ({
+  onOpenDownloadModal,
+  onOpenIosModal,
+}) => {
+  const [isIos, setIsIos] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsIos(/iPhone|iPad|iPod/i.test(navigator.userAgent));
+    }
+  }, []);
+
+  const virusTotalUrl =
+    process.env.NEXT_PUBLIC_VIRUSTOTAL_URL ||
+    'https://www.virustotal.com/gui/file/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/detection';
   return (
     <section id="install-guide" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 overflow-hidden">
       {/* Section Header */}
@@ -66,20 +83,34 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  audioJuice.playSuccessChime();
-                  onOpenDownloadModal();
-                }}
-                className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-95 transition"
-              >
-                <Download className="h-4 w-4" />
-                <span>Download .APK Package (42MB)</span>
-              </button>
+              {isIos ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    audioJuice.playSuccessChime();
+                    if (onOpenIosModal) onOpenIosModal();
+                  }}
+                  className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(6,182,212,0.45)] active:scale-95 transition"
+                >
+                  <Apple className="h-4 w-4 fill-black" />
+                  <span>Join iOS TestFlight Waitlist</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    audioJuice.playSuccessChime();
+                    onOpenDownloadModal();
+                  }}
+                  className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-95 transition"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download .APK Package (42MB)</span>
+                </button>
+              )}
 
               <span className="text-xs font-mono text-zinc-500 text-center sm:text-left">
-                Build: 2026.11.beta • Android 9.0+
+                Build: 2026.11.beta • Android 9.0+ & iOS TestFlight
               </span>
             </div>
 
@@ -164,15 +195,23 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({ onOpenDownloadModal })
       {/* Security Verification Panel (Floats in with Staggered Directions) */}
       <div id="security" className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
         <ScrollReveal direction="left" distance={50} duration={0.7} className="flex">
-          <div className="w-full p-5 rounded-2xl bg-[#090C15] border border-white/[0.06] space-y-2">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold">
-              <ShieldCheck className="h-4 w-4" />
-              <span>0/72 VirusTotal Detections</span>
+          <a
+            href={virusTotalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full p-5 rounded-2xl bg-[#090C15] hover:bg-[#0c101c] border border-white/[0.06] hover:border-emerald-500/40 space-y-2 transition group block"
+          >
+            <div className="flex items-center justify-between text-emerald-400 font-bold">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                <span>0/72 VirusTotal Detections</span>
+              </div>
+              <ExternalLink className="h-3.5 w-3.5 text-zinc-500 group-hover:text-emerald-400" />
             </div>
             <p className="text-zinc-400 text-[11px] leading-relaxed">
-              Every APK release undergoes automated SHA-256 static analysis against 72 antivirus engines. Zero malware, zero adware.
+              Every APK release undergoes automated SHA-256 static analysis against 72 antivirus engines. Click to view live audit.
             </p>
-          </div>
+          </a>
         </ScrollReveal>
 
         <ScrollReveal direction="up" distance={50} duration={0.7} delay={0.1} className="flex">

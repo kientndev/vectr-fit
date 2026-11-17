@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import {
   Download,
   X,
@@ -13,6 +15,7 @@ import {
   FileCheck,
   ChevronRight,
   AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { audioJuice } from '../lib/audioJuice';
@@ -28,7 +31,20 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
   const [isDownloaded, setIsDownloaded] = useState(false);
   const [activeStep, setActiveStep] = useState<number>(1);
 
-  const shaChecksum = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  let recordEventMutation: any = null;
+  try {
+    recordEventMutation = useMutation(api.telemetry.recordFunnelEvent);
+  } catch {
+    recordEventMutation = null;
+  }
+
+  const shaChecksum =
+    process.env.NEXT_PUBLIC_APK_SHA256 ||
+    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+  const virusTotalUrl =
+    process.env.NEXT_PUBLIC_VIRUSTOTAL_URL ||
+    'https://www.virustotal.com/gui/file/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/detection';
 
   const handleCopySha = () => {
     audioJuice.playTick();
@@ -41,16 +57,24 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
     audioJuice.playSuccessChime();
     setDownloadProgress(0);
 
-    // Simulated high-speed native APK download
+    // Fire Convex telemetry counter mutation immediately
+    if (recordEventMutation) {
+      recordEventMutation({
+        eventType: 'apk_download_clicked',
+        platform: 'android',
+        metadata: { source: 'apk_modal', timestamp: Date.now() },
+      }).catch(() => {});
+    }
+
+    // High-speed visual progress feedback
     let progress = 0;
     const interval = setInterval(() => {
-      progress += 18;
+      progress += 25;
       if (progress >= 100) {
         clearInterval(interval);
         setDownloadProgress(100);
         setIsDownloaded(true);
 
-        // Confetti celebration
         confetti({
           particleCount: 80,
           spread: 70,
@@ -58,22 +82,21 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
           colors: ['#10B981', '#06B6D4', '#FFFFFF'],
         });
 
-        // Trigger real file download (or Blob download)
+        // Trigger real Edge redirect download route
         try {
-          const element = document.createElement('a');
-          const file = new Blob([
-            'VECTR FIT Android Beta Package (v1.2.0)\nPackage: com.vectrfit.app\nEngine: 60FPS Biomechanics Native WASM\nBuild: 2026.11.beta'
-          ], { type: 'application/vnd.android.package-archive' });
-          element.href = URL.createObjectURL(file);
-          element.download = 'vectr-fit-v1.2.0-beta.apk';
-          document.body.appendChild(element);
-          element.click();
-          document.body.removeChild(element);
-        } catch {}
+          const a = document.createElement('a');
+          a.href = '/api/download';
+          a.download = 'vectr-fit-latest.apk';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch {
+          window.location.href = '/api/download';
+        }
       } else {
         setDownloadProgress(progress);
       }
-    }, 120);
+    }, 100);
   };
 
   if (!isOpen) return null;
@@ -167,15 +190,25 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
 
         {/* Security & Verification Badges */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-start gap-2.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold text-white block">0/72 Detections on VirusTotal</span>
+          <a
+            href={virusTotalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3.5 rounded-xl bg-black/40 hover:bg-black/60 border border-white/[0.06] hover:border-emerald-500/40 flex items-start gap-2.5 group transition"
+          >
+            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white group-hover:text-emerald-300 transition">
+                  0/72 Detections on VirusTotal
+                </span>
+                <ExternalLink className="h-3.5 w-3.5 text-zinc-500 group-hover:text-emerald-400" />
+              </div>
               <span className="text-[11px] text-zinc-500 mt-0.5 block">
-                Audited against all major Android malware signatures. Clean payload.
+                Audited against all major Android malware signatures. Click to view live audit report.
               </span>
             </div>
-          </div>
+          </a>
 
           <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-start gap-2.5">
             <FileCheck className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />

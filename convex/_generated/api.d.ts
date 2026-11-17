@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as aiCoach from "../aiCoach.js";
 import type * as protocols from "../protocols.js";
+import type * as telemetry from "../telemetry.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,6 +28,7 @@ import type * as protocols from "../protocols.js";
 declare const fullApi: ApiFromModules<{
   aiCoach: typeof aiCoach;
   protocols: typeof protocols;
+  telemetry: typeof telemetry;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

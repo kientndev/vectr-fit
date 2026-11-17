@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ScrollReveal } from './ScrollReveal';
+import { LiveTelemetryBadge } from './LiveTelemetryBadge';
 import {
   ShieldAlert,
   Zap,
@@ -75,6 +76,9 @@ export const FeatureBentoGrid: React.FC = () => {
         <p className="text-sm sm:text-base text-zinc-400">
           Every millisecond of your workout is evaluated by a client-side computer vision pipeline calibrated for elite kinetic compliance.
         </p>
+        <div className="pt-2 flex justify-center">
+          <LiveTelemetryBadge variant="expanded" />
+        </div>
       </ScrollReveal>
 
       {/* Bento Grid */}

@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { BiomechanicsArena } from './BiomechanicsArena';
 import { ScrollReveal } from './ScrollReveal';
+import { LiveTelemetryBadge } from './LiveTelemetryBadge';
 import {
   Download,
   ShieldCheck,
@@ -12,14 +14,27 @@ import {
   Check,
   Cpu,
   Lock,
+  Apple,
 } from 'lucide-react';
 import { audioJuice } from '../lib/audioJuice';
 
 interface HeroSectionProps {
   onOpenDownloadModal: () => void;
+  onOpenIosModal?: () => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDownloadModal }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({
+  onOpenDownloadModal,
+  onOpenIosModal,
+}) => {
+  const [isIos, setIsIos] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsIos(/iPhone|iPad|iPod/i.test(navigator.userAgent));
+    }
+  }, []);
+
   return (
     <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
       {/* Background Radial Glow & Mesh */}
@@ -38,10 +53,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDownloadModal })
           glowOnEnter={true}
           className="lg:col-span-5 space-y-6 text-left"
         >
-          {/* Animated Tech Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-semibold tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-            <Zap className="h-3.5 w-3.5 fill-current animate-pulse" />
-            <span>100% Client-Side Skeletal AI • 60 FPS Native Tracking</span>
+          {/* Live Global Telemetry Counter Badge (Real-time Convex updates) */}
+          <div className="flex flex-col gap-2.5">
+            <LiveTelemetryBadge />
+            <div className="inline-flex items-center gap-2 text-[11px] font-mono text-zinc-500">
+              <Zap className="h-3 w-3 text-emerald-400 fill-current" />
+              <span>100% Client-Side Skeletal AI • 60 FPS Native Tracking</span>
+            </div>
           </div>
 
           {/* Main Headline with Gradient */}
@@ -57,22 +75,36 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDownloadModal })
             VECTR FIT turns any mobile camera into an offline biomechanics laboratory. Tracks 33 body joints at 60 FPS, measures angles to the exact degree, auto-counts reps, and prevents injuries in real time.
           </p>
 
-          {/* Dual Conversion CTAs */}
+          {/* Dual Conversion CTAs: Automatically detects iOS vs Android/Desktop */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                audioJuice.playSuccessChime();
-                onOpenDownloadModal();
-              }}
-              className="group relative flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] hover:shadow-[0_0_40px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all"
-            >
-              <Download className="h-4 w-4 stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
-              <span>Download VECTR FIT (.APK)</span>
-              <span className="px-1.5 py-0.5 rounded bg-black/20 text-black text-[10px] font-bold">
-                42MB
-              </span>
-            </button>
+            {isIos ? (
+              <button
+                type="button"
+                onClick={() => {
+                  audioJuice.playSuccessChime();
+                  if (onOpenIosModal) onOpenIosModal();
+                }}
+                className="group relative flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] active:scale-[0.98] transition-all"
+              >
+                <Apple className="h-4 w-4 fill-black" />
+                <span>Join iOS TestFlight Waitlist</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  audioJuice.playSuccessChime();
+                  onOpenDownloadModal();
+                }}
+                className="group relative flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] hover:shadow-[0_0_40px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all"
+              >
+                <Download className="h-4 w-4 stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
+                <span>Download VECTR FIT (.APK)</span>
+                <span className="px-1.5 py-0.5 rounded bg-black/20 text-black text-[10px] font-bold">
+                  42MB
+                </span>
+              </button>
+            )}
 
             <a
               href="#arena"

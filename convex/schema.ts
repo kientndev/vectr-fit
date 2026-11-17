@@ -62,5 +62,30 @@ export default defineSchema({
     objective: v.string(),
     completionPct: v.number(),
   }).index('by_userId', ['userId']),
+
+  // Live Global Social Proof & Funnel Telemetry Counters
+  globalTelemetry: defineTable({
+    key: v.string(), // "live_stats"
+    repsAnalyzedToday: v.number(),
+    apksDownloadedToday: v.number(),
+    sandboxInteractions: v.number(),
+    webcamSessions: v.number(),
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
+
+  // Funnel Analytics Events
+  funnelEvents: defineTable({
+    eventType: v.string(), // "sandbox_interacted" | "webcam_enabled" | "apk_download_clicked" | "rep_analyzed"
+    timestamp: v.number(),
+    platform: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  }).index('by_eventType', ['eventType']),
+
+  // iOS TestFlight & Early Access Waitlist
+  waitlistSubmissions: defineTable({
+    email: v.string(),
+    platform: v.string(), // "ios" | "android" | "web"
+    createdAt: v.number(),
+  }).index('by_email', ['email']),
 });
 

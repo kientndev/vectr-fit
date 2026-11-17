@@ -8,11 +8,13 @@ import { FeatureBentoGrid } from '../components/FeatureBentoGrid';
 import { DownloadHub } from '../components/DownloadHub';
 import { LandingFooter } from '../components/LandingFooter';
 import { ApkDownloadModal } from '../components/ApkDownloadModal';
+import { IosWaitlistModal } from '../components/IosWaitlistModal';
 import { audioJuice } from '../lib/audioJuice';
 import { Cpu, Smartphone } from 'lucide-react';
 
 export default function LandingPage() {
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isIosModalOpen, setIsIosModalOpen] = useState(false);
   const [isNativeCapacitor, setIsNativeCapacitor] = useState(false);
 
   useEffect(() => {
@@ -29,13 +31,19 @@ export default function LandingPage() {
       {/* Main Landing Sections */}
       <main className="space-y-4">
         {/* Hero Section with Embedded Biomechanics Arena */}
-        <HeroSection onOpenDownloadModal={() => setIsDownloadModalOpen(true)} />
+        <HeroSection
+          onOpenDownloadModal={() => setIsDownloadModalOpen(true)}
+          onOpenIosModal={() => setIsIosModalOpen(true)}
+        />
 
         {/* Feature Bento Grid with 4 Interactive Cards */}
         <FeatureBentoGrid />
 
         {/* Download Hub & Visual Stepper */}
-        <DownloadHub onOpenDownloadModal={() => setIsDownloadModalOpen(true)} />
+        <DownloadHub
+          onOpenDownloadModal={() => setIsDownloadModalOpen(true)}
+          onOpenIosModal={() => setIsIosModalOpen(true)}
+        />
       </main>
 
       {/* Modern Dark Cyberpunk Footer */}
@@ -45,6 +53,12 @@ export default function LandingPage() {
       <ApkDownloadModal
         isOpen={isDownloadModalOpen}
         onClose={() => setIsDownloadModalOpen(false)}
+      />
+
+      {/* Apple iOS TestFlight Waitlist Modal */}
+      <IosWaitlistModal
+        isOpen={isIosModalOpen}
+        onClose={() => setIsIosModalOpen(false)}
       />
 
       {/* Floating Tactical Console Quick-Launcher */}
