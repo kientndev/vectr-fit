@@ -2,17 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { ScrollReveal } from './ScrollReveal';
+import { InstallAppButton } from './InstallAppButton';
 import {
   Download,
-  Smartphone,
   ShieldCheck,
   CheckCircle2,
   Lock,
   QrCode,
   FileCheck,
   ChevronRight,
-  Sparkles,
-  Apple,
   ExternalLink,
 } from 'lucide-react';
 import { audioJuice } from '../lib/audioJuice';
@@ -82,38 +80,14 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              {isIos ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    audioJuice.playSuccessChime();
-                    if (onOpenIosModal) onOpenIosModal();
-                  }}
-                  className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(6,182,212,0.45)] active:scale-95 transition"
-                >
-                  <Apple className="h-4 w-4 fill-black" />
-                  <span>Join iOS TestFlight Waitlist</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    audioJuice.playSuccessChime();
-                    onOpenDownloadModal();
-                    if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
-                      window.location.assign('/api/download');
-                    }
-                  }}
-                  className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-95 transition"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Download .APK Package (8.7MB)</span>
-                </button>
-              )}
+            <div className="space-y-4">
+              <InstallAppButton
+                onOpenApkModal={onOpenDownloadModal}
+                showApkFallback={true}
+              />
 
-              <span className="text-xs font-mono text-zinc-500 text-center sm:text-left">
-                Build: 2026.11.beta • Android 9.0+ & iOS TestFlight
+              <span className="text-xs font-mono text-zinc-500 block">
+                Build: 2026.11.pwa • Instant 1-Tap Mobile Install &amp; APK Fallback
               </span>
             </div>
 

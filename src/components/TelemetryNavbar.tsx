@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Download, Smartphone, Menu, X, Activity, Cpu } from 'lucide-react';
+import { Menu, X, Activity, Cpu } from 'lucide-react';
+import { InstallAppButton } from './InstallAppButton';
 import { audioJuice } from '../lib/audioJuice';
 
 interface TelemetryNavbarProps {
@@ -98,27 +99,10 @@ export const TelemetryNavbar: React.FC<TelemetryNavbarProps> = ({ onOpenDownload
 
         {/* Action Controls & Primary CTA */}
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              audioJuice.playSuccessChime();
-              onOpenDownloadModal();
-              if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
-                window.location.assign('/api/download');
-              }
-            }}
-            className="relative group overflow-hidden rounded-xl p-[1px] focus:outline-none"
-          >
-            {/* Shimmer sweep border */}
-            <span className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-cyan-400 to-emerald-500 rounded-xl animate-shimmer" />
-            <span className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#07090E] text-white text-xs font-mono font-bold group-hover:bg-[#07090E]/90 transition">
-              <Download className="h-3.5 w-3.5 text-emerald-400 group-hover:translate-y-0.5 transition-transform" />
-              <span>Download .APK</span>
-              <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20">
-                v1.0.1 • 8.7MB
-              </span>
-            </span>
-          </button>
+          <InstallAppButton
+            variant="navbar"
+            onOpenApkModal={onOpenDownloadModal}
+          />
 
           {/* Mobile menu hamburger */}
           <button

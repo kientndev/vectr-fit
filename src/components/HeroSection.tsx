@@ -5,16 +5,12 @@ import Link from 'next/link';
 import { BiomechanicsArena } from './BiomechanicsArena';
 import { ScrollReveal } from './ScrollReveal';
 import { LiveTelemetryBadge } from './LiveTelemetryBadge';
+import { InstallAppButton } from './InstallAppButton';
 import {
-  Download,
   ShieldCheck,
   Zap,
-  Smartphone,
   ChevronDown,
   Check,
-  Cpu,
-  Lock,
-  Apple,
 } from 'lucide-react';
 import { audioJuice } from '../lib/audioJuice';
 
@@ -25,15 +21,7 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onOpenDownloadModal,
-  onOpenIosModal,
 }) => {
-  const [isIos, setIsIos] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsIos(/iPhone|iPad|iPod/i.test(navigator.userAgent));
-    }
-  }, []);
 
   return (
     <section className="relative pt-24 sm:pt-32 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden">
@@ -75,49 +63,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             VECTR FIT turns any mobile camera into an offline biomechanics laboratory. Tracks 33 body joints at 60 FPS, measures angles to the exact degree, auto-counts reps, and prevents injuries in real time.
           </p>
 
-          {/* Dual Conversion CTAs: Automatically detects iOS vs Android/Desktop */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-            {isIos ? (
-              <button
-                type="button"
-                onClick={() => {
-                  audioJuice.playSuccessChime();
-                  if (onOpenIosModal) onOpenIosModal();
-                }}
-                className="group relative flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(6,182,212,0.45)] hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] active:scale-[0.98] transition-all"
-              >
-                <Apple className="h-4 w-4 fill-black" />
-                <span>Join iOS TestFlight Waitlist</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  audioJuice.playSuccessChime();
-                  onOpenDownloadModal();
-                  // If on Android mobile, auto-initiate the APK download directly to phone notification bar
-                  if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
-                    window.location.assign('/api/download');
-                  }
-                }}
-                className="group relative flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] hover:shadow-[0_0_40px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all"
-              >
-                <Download className="h-4 w-4 stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
-                <span>Download VECTR FIT (.APK)</span>
-                <span className="px-1.5 py-0.5 rounded bg-black/20 text-black text-[10px] font-bold">
-                  8.7MB
-                </span>
-              </button>
-            )}
+          {/* Conversion CTA: 1-Tap Native PWA Install or Web App Launch */}
+          <div className="space-y-3 pt-2">
+            <InstallAppButton
+              onOpenApkModal={onOpenDownloadModal}
+              showApkFallback={true}
+            />
 
-            <a
-              href="#arena"
-              onClick={() => audioJuice.playTick()}
-              className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-mono text-sm font-semibold transition"
-            >
-              <span>Test Live Demo</span>
-              <ChevronDown className="h-4 w-4 text-emerald-400 animate-bounce" />
-            </a>
+            <div>
+              <a
+                href="#arena"
+                onClick={() => audioJuice.playTick()}
+                className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-emerald-400 transition"
+              >
+                <span>Or explore interactive sandbox demo</span>
+                <ChevronDown className="h-3.5 w-3.5 text-emerald-400 animate-bounce" />
+              </a>
+            </div>
           </div>
 
           {/* Trust Strip */}

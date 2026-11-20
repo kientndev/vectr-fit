@@ -4,19 +4,34 @@ export const dynamic = 'force-static';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'VECTR FIT — Daily AI Coaching OS',
+    name: 'VECTR FIT — AI Form & Pose Coach',
     short_name: 'VECTR FIT',
-    description: 'AI-powered daily athletic coaching SaaS. Deterministic daily blueprints for Calisthenics Mastery and Gym Iron.',
-    start_url: '/',
+    description: 'AI-powered daily athletic coaching OS. Real-time 33-joint skeletal pose tracking and offline biomechanics laboratory in your browser.',
+    start_url: '/app',
+    id: '/app',
+    scope: '/',
     display: 'standalone',
-    background_color: '#09090B',
-    theme_color: '#09090B',
+    background_color: '#07090E',
+    theme_color: '#07090E',
     orientation: 'portrait',
     icons: [
       {
-        src: '/favicon.ico',
-        sizes: 'any',
-        type: 'image/x-icon',
+        src: '/icons/icon-192x192.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icons/icon-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icons/maskable-icon-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   };
