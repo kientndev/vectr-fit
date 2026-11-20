@@ -112,7 +112,7 @@ export const TelemetryNavbar: React.FC<TelemetryNavbarProps> = ({ onOpenDownload
               <Download className="h-3.5 w-3.5 text-emerald-400 group-hover:translate-y-0.5 transition-transform" />
               <span>Download .APK</span>
               <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20">
-                v1.2.0 • 42MB
+                v1.0.1 • 8.7MB
               </span>
             </span>
           </button>
@@ -175,7 +175,7 @@ export const TelemetryNavbar: React.FC<TelemetryNavbarProps> = ({ onOpenDownload
               }}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 text-black font-bold text-xs"
             >
-              <Smartphone className="h-4 w-4" /> Download VECTR FIT APK (42MB)
+              <Smartphone className="h-4 w-4" /> Download VECTR FIT APK (8.7MB)
             </button>
           </div>
         </div>

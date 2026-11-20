@@ -101,7 +101,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 <Download className="h-4 w-4 stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
                 <span>Download VECTR FIT (.APK)</span>
                 <span className="px-1.5 py-0.5 rounded bg-black/20 text-black text-[10px] font-bold">
-                  42MB
+                  8.7MB
                 </span>
               </button>
             )}

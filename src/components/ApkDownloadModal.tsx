@@ -40,11 +40,11 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
 
   const shaChecksum =
     process.env.NEXT_PUBLIC_APK_SHA256 ||
-    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+    'a88ac81e0771f7f17ed4888639095b113db66d728334b3421f6742826947b8cd';
 
   const virusTotalUrl =
     process.env.NEXT_PUBLIC_VIRUSTOTAL_URL ||
-    'https://www.virustotal.com/gui/file/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/detection';
+    'https://www.virustotal.com/gui/file/a88ac81e0771f7f17ed4888639095b113db66d728334b3421f6742826947b8cd?nocache=1';
 
   const handleCopySha = () => {
     audioJuice.playTick();
@@ -135,10 +135,10 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <span className="text-xs font-mono text-emerald-400 font-bold block">
-                VECTR FIT v1.2.0-beta (Release Build)
+                VECTR FIT v1.0.1 (Release Build)
               </span>
               <span className="text-sm font-bold text-white block">
-                vectr-fit-latest.apk (42.8 MB)
+                app-debug.apk (8.7 MB)
               </span>
               <span className="text-[11px] font-mono text-zinc-500">
                 Target: Android 9.0 (API 28) or higher • ARM64-v8a Optimized
@@ -152,7 +152,7 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
               className="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_25px_rgba(16,185,129,0.5)] transition flex items-center justify-center gap-2 shrink-0 active:scale-95"
             >
               <Download className="h-4 w-4" />
-              <span>{isDownloaded ? 'Downloaded ✓ (Click to Re-download)' : 'Download .APK (42MB)'}</span>
+              <span>{isDownloaded ? 'Downloaded ✓ (Click to Re-download)' : 'Download .APK (8.7MB)'}</span>
             </button>
           </div>
 

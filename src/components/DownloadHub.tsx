@@ -36,7 +36,7 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({
 
   const virusTotalUrl =
     process.env.NEXT_PUBLIC_VIRUSTOTAL_URL ||
-    'https://www.virustotal.com/gui/file/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/detection';
+    'https://www.virustotal.com/gui/file/a88ac81e0771f7f17ed4888639095b113db66d728334b3421f6742826947b8cd?nocache=1';
   return (
     <section id="install-guide" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16 overflow-hidden">
       {/* Section Header */}
@@ -105,7 +105,7 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({
                   className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-95 transition"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Download .APK Package (42MB)</span>
+                  <span>Download .APK Package (8.7MB)</span>
                 </button>
               )}
 

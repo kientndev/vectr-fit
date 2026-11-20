@@ -4,7 +4,7 @@ export const dynamic = 'force-static';
 
 // Fallback direct release download if env variable is not configured
 const DEFAULT_RELEASE_URL =
-  'https://github.com/kientndev/vectr-fit/releases/latest/download/vectr-fit-v1.0.0.apk';
+  'https://github.com/kientndev/vectr-fit/releases/download/v1.0.1/app-debug.apk';
 
 /**
  * Clean Edge Redirect Route: /api/download

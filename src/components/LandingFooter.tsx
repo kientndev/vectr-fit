@@ -104,7 +104,7 @@ export const LandingFooter: React.FC<LandingFooterProps> = ({ onOpenDownloadModa
               className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/[0.05] hover:bg-emerald-500 hover:text-black border border-white/10 text-white font-bold text-xs transition"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Download .APK (42MB)</span>
+              <span>Download .APK (8.7MB)</span>
             </button>
           </ScrollReveal>
         </div>
