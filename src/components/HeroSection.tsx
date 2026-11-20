@@ -95,6 +95,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 onClick={() => {
                   audioJuice.playSuccessChime();
                   onOpenDownloadModal();
+                  // If on Android mobile, auto-initiate the APK download directly to phone notification bar
+                  if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
+                    window.location.assign('/api/download');
+                  }
                 }}
                 className="group relative flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] hover:shadow-[0_0_40px_rgba(16,185,129,0.6)] active:scale-[0.98] transition-all"
               >

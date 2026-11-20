@@ -103,6 +103,9 @@ export const TelemetryNavbar: React.FC<TelemetryNavbarProps> = ({ onOpenDownload
             onClick={() => {
               audioJuice.playSuccessChime();
               onOpenDownloadModal();
+              if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
+                window.location.assign('/api/download');
+              }
             }}
             className="relative group overflow-hidden rounded-xl p-[1px] focus:outline-none"
           >
@@ -172,6 +175,9 @@ export const TelemetryNavbar: React.FC<TelemetryNavbarProps> = ({ onOpenDownload
               onClick={() => {
                 setMobileMenuOpen(false);
                 onOpenDownloadModal();
+                if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
+                  window.location.assign('/api/download');
+                }
               }}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 text-black font-bold text-xs"
             >

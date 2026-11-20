@@ -101,6 +101,9 @@ export const DownloadHub: React.FC<DownloadHubProps> = ({
                   onClick={() => {
                     audioJuice.playSuccessChime();
                     onOpenDownloadModal();
+                    if (typeof window !== 'undefined' && /Android/i.test(navigator.userAgent)) {
+                      window.location.assign('/api/download');
+                    }
                   }}
                   className="flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-sm font-mono shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-95 transition"
                 >

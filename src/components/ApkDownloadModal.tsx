@@ -55,7 +55,7 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
 
   const triggerDownload = () => {
     audioJuice.playSuccessChime();
-    setDownloadProgress(0);
+    setDownloadProgress(25);
 
     // Fire Convex telemetry counter mutation immediately
     if (recordEventMutation) {
@@ -66,8 +66,20 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
       }).catch(() => {});
     }
 
+    // Trigger real Edge redirect download route immediately on direct user gesture
+    try {
+      const a = document.createElement('a');
+      a.href = '/api/download';
+      a.setAttribute('download', 'app-debug.apk');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch {
+      window.location.href = '/api/download';
+    }
+
     // High-speed visual progress feedback
-    let progress = 0;
+    let progress = 25;
     const interval = setInterval(() => {
       progress += 25;
       if (progress >= 100) {
@@ -81,18 +93,6 @@ export const ApkDownloadModal: React.FC<ApkDownloadModalProps> = ({ isOpen, onCl
           origin: { y: 0.6 },
           colors: ['#10B981', '#06B6D4', '#FFFFFF'],
         });
-
-        // Trigger real Edge redirect download route
-        try {
-          const a = document.createElement('a');
-          a.href = '/api/download';
-          a.download = 'vectr-fit-latest.apk';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        } catch {
-          window.location.href = '/api/download';
-        }
       } else {
         setDownloadProgress(progress);
       }
